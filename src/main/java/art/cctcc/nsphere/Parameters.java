@@ -16,7 +16,6 @@ package art.cctcc.nsphere;
  * limitations under the License.
  */
 import java.time.ZonedDateTime;
-import java.util.Arrays;
 import java.util.random.RandomGeneratorFactory;
 import java.util.random.RandomGenerator;
 import org.apache.commons.math3.random.MersenneTwister;
@@ -32,10 +31,17 @@ public class Parameters {
   public static final double P_mutation = 0.25;
   public static final double P_recombinant = 0.75;
   public static RNG rng = RNG.MT;
-  
+
   public static enum ESMode {
 
-    Plus, Comma
+    Plus('+'), Comma(',');
+
+    public char symbol;
+
+    private ESMode(char symbol) {
+
+      this.symbol = symbol;
+    }
   }
 
   public static enum RNG {

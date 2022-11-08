@@ -56,11 +56,9 @@ public class Experiment {
     this.stddev = stddev;
     System.out.printf(
             """
-            %d-dimensional sphere experiment
-            mode=%d %s %d
-            stddev=%f
+            %d-dimensional sphere experiment constructed: mode=[%d%s%d], stddev=%f
             """, n,
-            mu, mode, lambda,
+            mu, mode.symbol, lambda,
             stddev);
   }
 

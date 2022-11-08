@@ -41,7 +41,20 @@ import org.knowm.xchart.style.markers.None;
  */
 public class ESMain {
 
-  public static void main(String[] args) throws IOException {
+  public static void main(String... args) throws IOException {
+
+    for (int i = 1; i <= 10; i++) {
+      System.out.println("#" + i);
+      run("n=10", "mode=Plus");
+    }
+
+    for (int i = 1; i <= 10; i++) {
+      System.out.println("#" + i);
+      run("n=10", "mode=Comma");
+    }
+  }
+
+  public static void run(String... args) throws IOException {
 
     var start = Instant.now();
 
@@ -54,12 +67,10 @@ public class ESMain {
     var n = Integer.parseInt(props.getProperty("n", "10"));
     var seed = Long.parseLong(props.getProperty("seed",
             String.valueOf(getEpochMilli())));
-    var mode = ESMode.valueOf(props.getProperty("mode", "Comma"));
-//            "Plus"));
+    var mode = ESMode.valueOf(props.getProperty("mode", "Plus"));
     var mu = Integer.parseInt(props.getProperty("mu", "1"));
     var lambda = Integer.parseInt(props.getProperty("lambda", "1"));
-    var output_filename = props.getProperty("output",
-            String.format("log-n%d-%s_%d", n, mode, seed));
+    var folder = props.getProperty("folder", "_" + seed);
 
     initRandom(seed, RNG.Xoshiro256PlusPlus);
 
@@ -67,10 +78,10 @@ public class ESMain {
     var info = String.format(
             """
             %s
-            Mode=%s, mu=%d, lambda=%d 
+            Mode=[%d%s%d]
             RNG=%s, Seed=%d
             """, title,
-            mode, mu, lambda,
+            mu, mode.symbol, lambda,
             rng, seed);
     System.out.print(info);
 
@@ -84,8 +95,6 @@ public class ESMain {
 
     var path = Path.of(System.getProperty("user.dir"), "es_data");
     Files.createDirectories(path);
-//    var f_txt = path.resolve(output_filename + ".txt");
-//    var f_png = path.resolve(output_filename + ".png");
 
     var time_elapsed = Duration.between(start, Instant.now());
     var hours = time_elapsed.toHoursPart();
@@ -103,6 +112,8 @@ public class ESMain {
             (hours > 0) ? time_elapsed.toHoursPart() + " h " : "",
             time_elapsed.toMinutesPart(), time_elapsed.toSecondsPart());
 
+    var output_filename = String.format("log-n%d-%s_%d", n, mode, seed);
+
     Files.write(path.resolve(output_filename + "(dev=0.01).txt"), output1);
     Files.write(path.resolve(output_filename + "(dev=0.1).txt"), output2);
     Files.write(path.resolve(output_filename + "(dev=1.0).txt"), output3);
@@ -114,7 +125,7 @@ public class ESMain {
       var groupSize = evalSize / groups;
 
       var chart = new XYChartBuilder()
-              .title(String.format("%s (%d%s%d), stddev=%f",
+              .title(String.format("%s (%d%s%d), stddev=%.2f",
                       title, mu, mode, lambda, e.stddev))
               .xAxisTitle(String.format("1 %% = approx. %d evals", groupSize))
               .yAxisTitle("Avg. Evals")
