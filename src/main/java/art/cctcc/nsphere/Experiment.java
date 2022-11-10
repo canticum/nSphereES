@@ -70,19 +70,24 @@ public class Experiment {
     return String.format("(%d%s%d)", this.mu, this.mode.symbol, this.lambda);
   }
 
-  public double calcEval(Individual idv) {
+  public double getEval(Individual idv) {
 
     if (idv.getEval() == -1) {
-      idv.setEval(Arrays.stream(idv.getChromosome()).map(i -> i * i).sum());
+      idv.setEval(this.calcEval(idv));
       evals.add(idv.getEval());
     }
     return idv.getEval();
   }
 
+  public double calcEval(Individual idv) {
+    
+    return Arrays.stream(idv.getChromosome()).map(i -> i * i).sum();
+  }
+
   public String membersToString(List<Individual> members) {
 
     return members.stream()
-            .map(this::calcEval)
+            .map(this::getEval)
             .map(eval -> String.format("%.3f", eval))
             .collect(Collectors.joining(", "));
   }
@@ -109,7 +114,7 @@ public class Experiment {
 
     do {
       var avg = parents.stream()
-              .mapToDouble(this::calcEval)
+              .mapToDouble(this::getEval)
               .average().getAsDouble();
 
       if (avg <= 0.0005 || ++this.iterations >= 10000000)
@@ -129,7 +134,7 @@ public class Experiment {
 
       parents = Stream.concat(offspring.stream(), parents.stream())
               .limit(mode == ESMode.Plus ? lambda + mu : lambda)
-              .sorted(Comparator.comparing(this::calcEval))
+              .sorted(Comparator.comparing(this::getEval))
               .limit(mu)
               .toList();
 
@@ -153,7 +158,7 @@ public class Experiment {
     var chromosome = parents.get(i).getChromosome();
 
     return Arrays.stream(chromosome)
-            .map(gene -> gene += rngGaussian(stddev))
+            .map(gene -> gene + rngGaussian(stddev))
             .toArray();
   }
 }
