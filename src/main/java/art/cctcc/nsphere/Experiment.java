@@ -87,14 +87,13 @@ public class Experiment {
             .collect(Collectors.joining(", "));
   }
 
+  List<Individual> parents;
+
   public String run(Path csv) {
     var start = Instant.now();
 
-    var parent = new Object() {
-
-      List<Individual> members = Stream.generate(() -> Individual.generate(n))
-              .limit(mu).toList();
-    };
+    parents = Stream.generate(() -> Individual.generate(n))
+            .limit(mu).toList();
 
     // ES loop
     var output = new ArrayList<String>();
@@ -109,7 +108,7 @@ public class Experiment {
     var iteration = 0;
 
     do {
-      var avg = parent.members.stream()
+      var avg = parents.stream()
               .mapToDouble(this::calcEval)
               .average().getAsDouble();
 
@@ -118,18 +117,17 @@ public class Experiment {
 
       var offspring = IntStream.generate(() -> rngInt(mu))
               .limit(lambda)
-              .mapToObj(i -> parent.members.get(i).getChromosome())
-              .map(this::mutation)
+              .mapToObj(this::mutation)
               .map(Individual::new)
               .toList();
 
       var line = String.format("%d, %.3f, ", iteration++, avg)
-              + membersToString(parent.members) + ", "
+              + membersToString(parents) + ", "
               + membersToString(offspring);
 
       output.add(line);
 
-      parent.members = Stream.concat(offspring.stream(), parent.members.stream())
+      parents = Stream.concat(offspring.stream(), parents.stream())
               .limit(mode == ESMode.Plus ? lambda + mu : lambda)
               .sorted(Comparator.comparing(this::calcEval))
               .limit(mu)
@@ -150,7 +148,9 @@ public class Experiment {
             time_elapsed.toMinutesPart(), time_elapsed.toSecondsPart());
   }
 
-  public double[] mutation(double[] chromosome) {
+  public double[] mutation(int i) {
+
+    var chromosome = parents.get(i).getChromosome();
 
     return Arrays.stream(chromosome)
             .map(gene -> gene += rngGaussian(stddev))

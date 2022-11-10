@@ -61,8 +61,8 @@ public class ESMain {
               System.out.println("Run#" + i);
               Stream.of(0.01, 0.1, 1.0)
                       .map(stddev
-                              -> new Experiment(n, ESMode.Plus, 1, 1, stddev))
-                      //->new ExperimentUncorrelatedNStepSize(n, ESMode.Plus, 1, 1, stddev, 0.001))
+//                              -> new Experiment(n, ESMode.Plus, 1, 1, stddev))
+                      ->new ExperimentUncorrelatedNStepSize(n, ESMode.Plus, 1, 1, stddev, 0))
                       .peek(e -> System.out.println(e.run(path.resolve(String.format("run_%d(dev=%.2f).csv", i, e.stddev)))))
                       .forEach(e -> System.out.printf("Iterations = %s, eval sizes = %s\n", e.iterations, e.evals.size()));
 

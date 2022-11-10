@@ -34,7 +34,7 @@ import java.util.stream.Stream;
  */
 public class ExperimentUncorrelatedNStepSize extends Experiment {
 
-  private double[] stddevs;
+  private double[][] stddevs;
   private final double tau;
   private final double tauPrime;
   private final double epsilon0;
@@ -44,8 +44,9 @@ public class ExperimentUncorrelatedNStepSize extends Experiment {
           double tau, double tauPrime, double epsilon0) {
 
     super(n, mode, mu, lambda, stddev);
-    this.stddevs = new double[n];
-    Arrays.fill(this.stddevs, stddev);
+    this.stddevs = new double[mu][n];
+    IntStream.range(0, mu)
+            .forEach(i -> Arrays.fill(this.stddevs[i], stddev));
     this.tau = tau;
     this.tauPrime = tauPrime;
     this.epsilon0 = epsilon0;
@@ -60,30 +61,32 @@ public class ExperimentUncorrelatedNStepSize extends Experiment {
             epsilon0);
   }
 
-  public double[] updateStddev() {
+  public double[] updateStddev(int i) {
 
     var gaussian_prime = rngGaussian(1);
-    var gaussian = DoubleStream.generate(() -> rngGaussian(1))
+    var gaussians = DoubleStream.generate(() -> rngGaussian(1))
             .limit(n)
             .toArray();
-    for (int i = 0; i < n; i++) {
-      var d = this.stddevs[i];
-      var d_prime = d * Math.pow(Math.E,
-              tauPrime * gaussian_prime + tau * gaussian[i]);
-      if (d_prime < this.epsilon0)
-        d_prime = this.epsilon0;
-      this.stddevs[i] = d_prime;
+    for (int j = 0; j < n; j++) {
+      var d_prime = this.stddevs[i][j] * Math.pow(Math.E,
+              tauPrime * gaussian_prime + tau * gaussians[j]);
+//      if (d_prime < this.epsilon0)
+//        d_prime = this.epsilon0;
+      this.stddevs[i][j] = d_prime;
     }
-    return gaussian;
+    return gaussians;
   }
 
   @Override
-  public double[] mutation(double[] chromosome) {
+  public double[] mutation(int i) {
 
-    var gaussians = this.updateStddev();
+    var chromosome = parents.get(i).getChromosome();
+
+    var gaussians = this.updateStddev(i);
 
     return IntStream.range(0, chromosome.length)
-            .mapToDouble(j -> chromosome[j] += this.stddevs[j] * gaussians[j])
+//            .peek(j -> System.out.printf("%.3f, %.3f\n", this.stddevs[i][j], gaussians[j]))
+            .mapToDouble(j -> chromosome[j] += this.stddevs[i][j] * gaussians[j])
             .toArray();
   }
 
