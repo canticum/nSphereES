@@ -37,7 +37,9 @@ import java.util.stream.Stream;
  *
  * @author Jonathan Chang, Chun-yien <ccy@musicapoetica.org>
  */
-public class Experiment {
+public class ExperimentFSS {
+
+  static String TYPE = "fixed-step-size";
 
   public List<Double> evals
           = Collections.synchronizedList(new ArrayList<>());
@@ -50,19 +52,14 @@ public class Experiment {
   public double stddev;
   public int iterations;
 
-  public Experiment(int n, ESMode mode, int mu, int lambda, double stddev) {
+  public ExperimentFSS(int n, ESMode mode, int mu, int lambda, double stddev) {
 
     this.n = n;
     this.mode = mode;
     this.mu = mu;
     this.lambda = lambda;
     this.stddev = stddev;
-    System.out.printf(
-            """
-            %d-dimensional sphere experiment constructed: mode=[%d%s%d], stddev=%f
-            """, n,
-            mu, mode.symbol, lambda,
-            stddev);
+    System.out.println(getTitle());
   }
 
   public String getESMode() {
@@ -80,7 +77,7 @@ public class Experiment {
   }
 
   public double calcEval(Individual idv) {
-    
+
     return Arrays.stream(idv.getChromosome()).map(i -> i * i).sum();
   }
 
@@ -89,7 +86,7 @@ public class Experiment {
     return members.stream()
             .map(this::getEval)
             .map(eval -> String.format("%.3f", eval))
-            .collect(Collectors.joining(", "));
+            .collect(Collectors.joining(","));
   }
 
   List<Individual> parents;
@@ -102,22 +99,21 @@ public class Experiment {
 
     // ES loop
     var output = new ArrayList<String>();
-    output.add("Iteration, Average, "
-            + IntStream.of(0, mu)
+    output.add("Iteration,Average,"
+            + IntStream.range(0, mu)
                     .mapToObj(i -> "X" + i)
-                    .collect(Collectors.joining(", ")) + ", "
-            + IntStream.of(0, lambda)
+                    .collect(Collectors.joining(",")) + ","
+            + IntStream.range(0, lambda)
                     .mapToObj(i -> "Y" + i)
-                    .collect(Collectors.joining(", ")));
+                    .collect(Collectors.joining(",")));
     var finished = false;
-    var iteration = 0;
 
     do {
-      var avg = parents.stream()
-              .mapToDouble(this::getEval)
-              .average().getAsDouble();
 
-      if (avg <= 0.0005 || ++this.iterations >= 10000000)
+      if (this.iterations++ >= 10000000
+              || parents.stream()
+                      .map(Individual::getEval)
+                      .anyMatch(eval -> eval > 0 && eval <= 0.0005))
         finished = true;
 
       var offspring = IntStream.generate(() -> rngInt(mu))
@@ -126,8 +122,12 @@ public class Experiment {
               .map(Individual::new)
               .toList();
 
-      var line = String.format("%d, %.3f, ", iteration++, avg)
-              + membersToString(parents) + ", "
+      var avg = parents.stream()
+              .mapToDouble(this::getEval)
+              .average().getAsDouble();
+
+      var line = String.format("%d,%.3f,", this.iterations, avg)
+              + membersToString(parents) + ","
               + membersToString(offspring);
 
       output.add(line);
@@ -143,7 +143,7 @@ public class Experiment {
     try {
       Files.write(csv, output);
     } catch (IOException ex) {
-      Logger.getLogger(Experiment.class.getName()).log(Level.SEVERE, null, ex);
+      Logger.getLogger(ExperimentFSS.class.getName()).log(Level.SEVERE, null, ex);
     }
 
     var time_elapsed = Duration.between(start, Instant.now());
@@ -160,5 +160,11 @@ public class Experiment {
     return Arrays.stream(chromosome)
             .map(gene -> gene + rngGaussian(stddev))
             .toArray();
+  }
+
+  public String getTitle() {
+
+    return String.format("%d-dimensional sphere %s experiment: mode=%s, stddev=%.2f",
+            n, TYPE, getESMode(), stddev);
   }
 }

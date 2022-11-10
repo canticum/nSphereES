@@ -42,6 +42,11 @@ public class Parameters {
 
       this.symbol = symbol;
     }
+
+    public String getMode(int mu, int lambda) {
+
+      return String.format("(%d%s%d)", mu, this.symbol, lambda);
+    }
   }
 
   public static enum RNG {

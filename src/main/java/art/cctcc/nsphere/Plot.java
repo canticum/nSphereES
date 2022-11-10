@@ -15,10 +15,16 @@
  */
 package art.cctcc.nsphere;
 
-import art.cctcc.nsphere.Parameters.ESMode;
 import java.awt.GraphicsEnvironment;
-import java.util.stream.IntStream;
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.util.List;
+import java.util.logging.Level;
+import java.util.logging.Logger;
+import org.knowm.xchart.BitmapEncoder;
 import org.knowm.xchart.SwingWrapper;
+import org.knowm.xchart.XYChart;
 import org.knowm.xchart.XYChartBuilder;
 import org.knowm.xchart.style.markers.None;
 
@@ -29,55 +35,34 @@ import org.knowm.xchart.style.markers.None;
  */
 public class Plot {
 
-  public static void main(String[] args) {
+  private String title;
+  private XYChart chart;
 
-    var e = new Experiment(10, ESMode.Plus, 1, 1, 0.01);
-    var evalSize = e.evals.size();
-    var groups = 100;
-    var groupSize = evalSize / groups;
-    var title = "";
-    var chart = new XYChartBuilder()
-            .title(String.format("%s%s, stddev=%.2f",
-                    title, e.getESMode(), e.stddev))
-            .xAxisTitle(String.format("1 %% = approx. %d evals", groupSize))
-            .yAxisTitle("Avg. Evals")
+  public Plot(String title, String esmode, double stddev) {
+
+    this.title = title;
+    this.chart = new XYChartBuilder()
+            .title(title)
+            .xAxisTitle(String.format("Iterations"))
+            .yAxisTitle("Evals")
             .width(1200)
             .height(600)
             .build();
+  }
 
-    var xData = IntStream.rangeClosed(1, groups)
-            .map(group -> (int) (100.0 * group / groups))
-            .boxed()
-            .toList();
+  public void add(String series, List<Integer> xData, List<Double> yData) {
 
-    var evalAverage = IntStream.range(0, groups)
-            .mapToDouble(
-                    group -> IntStream.range(group * groupSize, (group + 1) * groupSize)
-                            .mapToDouble(i -> e.evals.get(i))
-                            .average().getAsDouble())
-            .boxed()
-            .toList();
+    chart.addSeries(series, xData, yData).setMarker(new None());
+  }
 
-    var evalMin = IntStream.range(0, groups)
-            .mapToDouble(
-                    group -> IntStream.range(group * groupSize, (group + 1) * groupSize)
-                            .mapToDouble(i -> e.evals.get(i))
-                            .min().getAsDouble())
-            .boxed()
-            .toList();
+  public void show(Path path) {
 
-    var mNone = new None();
-    chart.addSeries("avg_" + e.stddev, xData, evalAverage)
-            .setMarker(mNone);
-    chart.addSeries("min_" + e.stddev, xData, evalMin)
-            .setMarker(mNone);
-//    var f_png = path.resolve(String.format("%s(dev=%f).png", output_filename, e.stddev));
-//    System.out.println("Writing plot to " + f_png);
-//    try {
-//      Files.write(f_png, BitmapEncoder.getBitmapBytes(chart, BitmapEncoder.BitmapFormat.PNG));
-//    } catch (IOException ex) {
-//      Logger.getLogger(ESMain.class.getName()).log(Level.SEVERE, null, ex);
-//    }
+    System.out.println("Writing plot to " + path);
+    try {
+      Files.write(path, BitmapEncoder.getBitmapBytes(chart, BitmapEncoder.BitmapFormat.PNG));
+    } catch (IOException ex) {
+      Logger.getLogger(ESMain.class.getName()).log(Level.SEVERE, null, ex);
+    }
     if (!GraphicsEnvironment.isHeadless()) {
       new SwingWrapper(chart).setTitle(title).displayChart();
     }

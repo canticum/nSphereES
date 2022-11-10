@@ -23,7 +23,9 @@ import java.util.stream.IntStream;
  *
  * @author Jonathan Chang, Chun-yien <ccy@musicapoetica.org>
  */
-public class ExperimentUNSS extends Experiment {
+public class ExperimentUNSS extends ExperimentFSS {
+
+  public static String TYPE = "uncorrelated n-step-size";
 
   private double[][] stddevs;
   private final double tau;
@@ -47,7 +49,7 @@ public class ExperimentUNSS extends Experiment {
           int mu, int lambda, double stddev, double epsilon0) {
 
     this(n, mode, mu, lambda, stddev,
-            stddev * 0.000001 / Math.sqrt(2 * Math.sqrt(n)),
+            stddev * 0.0000001 / Math.sqrt(2 * Math.sqrt(n)),
             1 / Math.sqrt(2 * n),
             epsilon0);
   }
@@ -77,11 +79,5 @@ public class ExperimentUNSS extends Experiment {
     return IntStream.range(0, chromosome.length)
             .mapToDouble(j -> chromosome[j] + this.stddevs[i][j] * rngGaussian(1))
             .toArray();
-  }
-
-  @Override
-  public String getESMode() {
-
-    return super.getESMode() + "(uncorrelated n step-sizes)";
   }
 }
