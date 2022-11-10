@@ -19,21 +19,13 @@ import art.cctcc.nsphere.Parameters.*;
 import static art.cctcc.nsphere.Parameters.getEpochMilli;
 import static art.cctcc.nsphere.Parameters.initRandom;
 import static art.cctcc.nsphere.Parameters.rng;
-import java.awt.GraphicsEnvironment;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.Duration;
 import java.time.Instant;
-import java.util.Properties;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
-import org.knowm.xchart.BitmapEncoder;
-import org.knowm.xchart.SwingWrapper;
-import org.knowm.xchart.XYChartBuilder;
-import org.knowm.xchart.style.markers.None;
 
 /**
  *
@@ -43,133 +35,41 @@ public class ESMain {
 
   public static void main(String... args) throws IOException {
 
-    for (int i = 1; i <= 10; i++) {
-      System.out.println("#" + i);
-      run("n=10", "mode=Plus");
-    }
+    final var seed = getEpochMilli();
+    initRandom(seed, RNG.Xoshiro256PlusPlus);
 
-    for (int i = 1; i <= 10; i++) {
-      System.out.println("#" + i);
-      run("n=10", "mode=Comma");
-    }
-  }
+    final var n = 10;
 
-  public static void run(String... args) throws IOException {
+    System.out.printf(
+            """
+            *******************************************
+            %s
+            Mode=%s, RNG=%s, Seed=%d
+            *******************************************
+            """,
+            n + "-dimensional Sphere Model",
+            "(1+1)", rng, seed);
+
+    var folder = String.format("log-n%d-%s_%d", n, "(1+1)", seed);
+    var path = Path.of(System.getProperty("user.dir"), "es_data", folder);
+    Files.createDirectories(path);
 
     var start = Instant.now();
 
-    Properties props = new Properties();
-    for (String arg : args) {
-      var prop = arg.split("=");
-      var value = prop.length == 1 ? "" : prop[1];
-      props.setProperty(prop[0], value);
-    }
-    var n = Integer.parseInt(props.getProperty("n", "10"));
-    var seed = Long.parseLong(props.getProperty("seed",
-            String.valueOf(getEpochMilli())));
-    var mode = ESMode.valueOf(props.getProperty("mode", "Plus"));
-    var mu = Integer.parseInt(props.getProperty("mu", "1"));
-    var lambda = Integer.parseInt(props.getProperty("lambda", "1"));
-    var folder = props.getProperty("folder", "_" + seed);
+    IntStream.rangeClosed(1, 10)
+            .forEach(i -> {
+              System.out.println("Run#" + i);
+              Stream.of(0.01, 0.1, 1.0)
+                      .map(stddev
+                              -> new Experiment(n, ESMode.Plus, 1, 1, stddev))
+                      //->new ExperimentUncorrelatedNStepSize(n, ESMode.Plus, 1, 1, stddev, 0.001))
+                      .peek(e -> System.out.println(e.run(path.resolve(String.format("run_%d(dev=%.2f).csv", i, e.stddev)))))
+                      .forEach(e -> System.out.printf("Iterations = %s, eval sizes = %s\n", e.iterations, e.evals.size()));
 
-    initRandom(seed, RNG.Xoshiro256PlusPlus);
-
-    var title = n + "-dimensional Sphere Model";
-    var info = String.format(
-            """
-            %s
-            Mode=[%d%s%d]
-            RNG=%s, Seed=%d
-            """, title,
-            mu, mode.symbol, lambda,
-            rng, seed);
-    System.out.print(info);
-
-    var e1 = new Experiment(10, ESMode.Plus, mu, lambda, 0.01);
-    var e2 = new Experiment(10, ESMode.Plus, mu, lambda, 0.1);
-    var e3 = new Experiment(10, ESMode.Plus, mu, lambda, 1.0);
-
-    var output1 = e1.run();
-    var output2 = e2.run();
-    var output3 = e3.run();
-
-    var path = Path.of(System.getProperty("user.dir"), "es_data");
-    Files.createDirectories(path);
-
-    var time_elapsed = Duration.between(start, Instant.now());
-    var hours = time_elapsed.toHoursPart();
-    System.out.printf(
-            """
-            
-            *******************************************
-            %sGeneration = %s
-            evals size = %s
-            Time elapsed = %s%02d m %02d s
-            *******************************************
-            """, info,
-            e1.generation + ", " + e2.generation + ", " + e3.generation,
-            e1.evals.size() + ", " + e2.evals.size() + ", " + e3.evals.size(),
-            (hours > 0) ? time_elapsed.toHoursPart() + " h " : "",
-            time_elapsed.toMinutesPart(), time_elapsed.toSecondsPart());
-
-    var output_filename = String.format("log-n%d-%s_%d", n, mode, seed);
-
-    Files.write(path.resolve(output_filename + "(dev=0.01).txt"), output1);
-    Files.write(path.resolve(output_filename + "(dev=0.1).txt"), output2);
-    Files.write(path.resolve(output_filename + "(dev=1.0).txt"), output3);
-
-    Stream.of(e1, e2, e3).forEach(e -> {
-
-      var evalSize = e.evals.size();
-      var groups = 100;
-      var groupSize = evalSize / groups;
-
-      var chart = new XYChartBuilder()
-              .title(String.format("%s (%d%s%d), stddev=%.2f",
-                      title, mu, mode, lambda, e.stddev))
-              .xAxisTitle(String.format("1 %% = approx. %d evals", groupSize))
-              .yAxisTitle("Avg. Evals")
-              .width(1200)
-              .height(600)
-              .build();
-
-      var xData = IntStream.rangeClosed(1, groups)
-              .map(group -> (int) (100.0 * group / groups))
-              .boxed()
-              .toList();
-
-      var evalAverage = IntStream.range(0, groups)
-              .mapToDouble(
-                      group -> IntStream.range(group * groupSize, (group + 1) * groupSize)
-                              .mapToDouble(i -> e.evals.get(i))
-                              .average().getAsDouble())
-              .boxed()
-              .toList();
-
-      var evalMin = IntStream.range(0, groups)
-              .mapToDouble(
-                      group -> IntStream.range(group * groupSize, (group + 1) * groupSize)
-                              .mapToDouble(i -> e.evals.get(i))
-                              .min().getAsDouble())
-              .boxed()
-              .toList();
-
-      var mNone = new None();
-      chart.addSeries("avg_" + e.stddev, xData, evalAverage)
-              .setMarker(mNone);
-      chart.addSeries("min_" + e.stddev, xData, evalMin)
-              .setMarker(mNone);
-      var f_png = path.resolve(String.format("%s(dev=%f).png", output_filename, e.stddev));
-      System.out.println("Writing plot to " + f_png);
-      try {
-        Files.write(f_png, BitmapEncoder.getBitmapBytes(chart, BitmapEncoder.BitmapFormat.PNG));
-      } catch (IOException ex) {
-        Logger.getLogger(ESMain.class.getName()).log(Level.SEVERE, null, ex);
-      }
-      if (!GraphicsEnvironment.isHeadless()) {
-        new SwingWrapper(chart).setTitle(title).displayChart();
-      }
-    });
-
+              var time_elapsed = Duration.between(start, Instant.now());
+              var hours = time_elapsed.toHoursPart();
+              System.out.printf("Time elapsed = %s%02d m %02d s\n", (hours > 0) ? time_elapsed.toHoursPart() + " h " : "",
+                      time_elapsed.toMinutesPart(), time_elapsed.toSecondsPart());
+            });
   }
 }

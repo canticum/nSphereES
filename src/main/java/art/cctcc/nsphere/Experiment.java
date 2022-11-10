@@ -18,6 +18,8 @@ package art.cctcc.nsphere;
 import art.cctcc.nsphere.Parameters.*;
 import static art.cctcc.nsphere.Parameters.*;
 import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.ArrayList;
@@ -25,6 +27,8 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
@@ -38,14 +42,13 @@ public class Experiment {
   public List<Double> evals
           = Collections.synchronizedList(new ArrayList<>());
 
-  private int n;
-  private ESMode mode;
-  double stddev;
+  final public int n;
+  final public ESMode mode;
+  final int mu;
+  final int lambda;
 
-  private int mu = 1;
-  private int lambda = 1;
-
-  public int generation;
+  public double stddev;
+  public int iterations;
 
   public Experiment(int n, ESMode mode, int mu, int lambda, double stddev) {
 
@@ -62,6 +65,11 @@ public class Experiment {
             stddev);
   }
 
+  public String getESMode() {
+
+    return String.format("(%d%s%d)", this.mu, this.mode.symbol, this.lambda);
+  }
+
   public double calcEval(Individual idv) {
 
     if (idv.getEval() == -1) {
@@ -75,12 +83,11 @@ public class Experiment {
 
     return members.stream()
             .map(this::calcEval)
-            .map(eval -> String.format("%.2f", eval))
+            .map(eval -> String.format("%.3f", eval))
             .collect(Collectors.joining(", "));
   }
 
-  public List<String> run() throws IOException {
-
+  public String run(Path csv) {
     var start = Instant.now();
 
     var parent = new Object() {
@@ -91,25 +98,36 @@ public class Experiment {
 
     // ES loop
     var output = new ArrayList<String>();
+    output.add("Iteration, Average, "
+            + IntStream.of(0, mu)
+                    .mapToObj(i -> "X" + i)
+                    .collect(Collectors.joining(", ")) + ", "
+            + IntStream.of(0, lambda)
+                    .mapToObj(i -> "Y" + i)
+                    .collect(Collectors.joining(", ")));
     var finished = false;
+    var iteration = 0;
 
     do {
       var avg = parent.members.stream()
               .mapToDouble(this::calcEval)
               .average().getAsDouble();
 
-//      System.out.printf("Average eval = %.3f (g=%d)\n", avg, ++generation);
-      if (avg <= 0.0005 || ++this.generation >= 10000000)
+      if (avg <= 0.0005 || ++this.iterations >= 10000000)
         finished = true;
 
       var offspring = IntStream.generate(() -> rngInt(mu))
               .limit(lambda)
               .mapToObj(i -> parent.members.get(i).getChromosome())
-              .map(chromosome -> Arrays.stream(chromosome).map(gene -> gene += rngGaussian(stddev)).toArray())
+              .map(this::mutation)
               .map(Individual::new)
               .toList();
 
-      output.add(membersToString(parent.members) + " | " + membersToString(offspring));
+      var line = String.format("%d, %.3f, ", iteration++, avg)
+              + membersToString(parent.members) + ", "
+              + membersToString(offspring);
+
+      output.add(line);
 
       parent.members = Stream.concat(offspring.stream(), parent.members.stream())
               .limit(mode == ESMode.Plus ? lambda + mu : lambda)
@@ -119,13 +137,23 @@ public class Experiment {
 
     } while (!finished);
 
+    try {
+      Files.write(csv, output);
+    } catch (IOException ex) {
+      Logger.getLogger(Experiment.class.getName()).log(Level.SEVERE, null, ex);
+    }
+
     var time_elapsed = Duration.between(start, Instant.now());
     var hours = time_elapsed.toHoursPart();
-    output.add(String.format("Time elapsed = %s%02d m %02d s",
+    return String.format("Time elapsed = %s%02d m %02d s",
             (hours > 0) ? time_elapsed.toHoursPart() + " h " : "",
-            time_elapsed.toMinutesPart(), time_elapsed.toSecondsPart()));
-
-    return output;
+            time_elapsed.toMinutesPart(), time_elapsed.toSecondsPart());
   }
 
+  public double[] mutation(double[] chromosome) {
+
+    return Arrays.stream(chromosome)
+            .map(gene -> gene += rngGaussian(stddev))
+            .toArray();
+  }
 }
