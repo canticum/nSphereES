@@ -49,35 +49,30 @@ public class ExperimentUNSS extends ExperimentFSS {
           int mu, int lambda, double stddev, double epsilon0) {
 
     this(n, mode, mu, lambda, stddev,
-            stddev * 0.0000001 / Math.sqrt(2 * Math.sqrt(n)),
+            1e-7 / Math.sqrt(2 * Math.sqrt(n)),
             1 / Math.sqrt(2 * n),
             epsilon0);
   }
 
-  /**
-   *
-   * @param i individual index
-   * @return
-   */
-  public void updateStddev(int i) {
+  public void updateStddev(int idv) {
 
     var gaussian_prime = rngGaussian(1);
-    IntStream.range(0, n).forEach(j -> {
-      var d_prime = this.stddevs[i][j] * Math.pow(Math.E,
+    IntStream.range(0, n).forEach(i -> {
+      var d_prime = this.stddevs[idv][i] * Math.pow(Math.E,
               tauPrime * gaussian_prime + tau * rngGaussian(1));
       if (d_prime < this.epsilon0)
         d_prime = this.epsilon0;
-      this.stddevs[i][j] = d_prime;
+      this.stddevs[idv][i] = d_prime;
     });
   }
 
   @Override
-  public double[] mutation(int i) {
+  public double[] mutation(int idv) {
 
-    this.updateStddev(i);
-    var chromosome = parents.get(i).getChromosome();
+    this.updateStddev(idv);
+    var chromosome = parents.get(idv).getChromosome();
     return IntStream.range(0, chromosome.length)
-            .mapToDouble(j -> chromosome[j] + this.stddevs[i][j] * rngGaussian(1))
+            .mapToDouble(i -> chromosome[i] + this.stddevs[idv][i] * rngGaussian(1))
             .toArray();
   }
 }

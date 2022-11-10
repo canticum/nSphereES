@@ -16,23 +16,14 @@
 package art.cctcc.nsphere;
 
 import art.cctcc.nsphere.Parameters.*;
-import static art.cctcc.nsphere.Parameters.getEpochMilli;
-import static art.cctcc.nsphere.Parameters.initRandom;
-import static art.cctcc.nsphere.Parameters.rng;
-import com.opencsv.CSVReaderHeaderAwareBuilder;
-import com.opencsv.exceptions.CsvValidationException;
-import java.io.FileReader;
+import static art.cctcc.nsphere.Parameters.*;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.time.Duration;
 import java.time.Instant;
-import java.util.ArrayList;
 import java.util.List;
-import java.util.logging.Level;
-import java.util.logging.Logger;
+import java.util.function.Function;
 import java.util.stream.IntStream;
-import java.util.stream.Stream;
 
 /**
  *
@@ -47,10 +38,20 @@ public class ESMain {
 
     final var n = 10;
     final var run = 10;
+    var stddevs = List.of(0.01, 0.1, 1.0);
     var mode = ESMode.Plus;
     var mu = 1;
     var lambda = 1;
+    var epsilon0 = 0.0001;
+    var exp = "unss";
     var type = ExperimentUNSS.TYPE;
+
+    Function<Double, Experiment> getExperiment = stddev -> switch (exp) {
+      case "fss" ->
+        new ExperimentFSS(n, ESMode.Plus, 1, 1, stddev);
+      default -> //"unss"
+        new ExperimentUNSS(n, mode, mu, lambda, stddev, epsilon0);
+    };
 
     System.out.printf(
             """
@@ -68,58 +69,25 @@ public class ESMain {
 
     var start = Instant.now();
 
-    IntStream.rangeClosed(1, run)
-            .forEach(i -> {
-              System.out.println("Run#" + i);
-              Stream.of(0.01, 0.1, 1.0)
-                      //.map(stddev -> new ExperimentFSS(n, ESMode.Plus, 1, 1, stddev))
-                      .map(stddev -> new ExperimentUNSS(n, mode, mu, lambda, stddev, 0.0001))
-                      .peek(e -> System.out.println(e.run(path.resolve(String.format("run_%d(dev=%.2f).csv", i, e.stddev)))))
-                      .forEach(e -> System.out.printf("Iterations = %s, eval sizes = %s\n", e.iterations, e.evals.size()));
-              var time_elapsed = Duration.between(start, Instant.now());
-              var hours = time_elapsed.toHoursPart();
-              System.out.printf("Time elapsed = %s%02d m %02d s\n", (hours > 0) ? time_elapsed.toHoursPart() + " h " : "",
-                      time_elapsed.toMinutesPart(), time_elapsed.toSecondsPart());
-            });
+    IntStream.rangeClosed(1, run).forEach(i -> {
+      System.out.println("Run#" + i);
+      stddevs.stream()
+              .map(getExperiment)
+              .peek(e -> System.out.println(e.run(path.resolve(String.format("run_%d(dev=%.2f).csv", i, e.stddev)))))
+              .forEach(e -> System.out.printf("Iterations = %s, eval sizes = %s\n", e.iterations, e.evals.size()));
+      System.out.println(time_elapsed(start));
+    });
 
-    Stream.of(0.01, 0.1, 1.0)
-            .forEach(stddev -> {
-              var title = String.format("%d-dimensional sphere %s experiment: mode=%s, stddev=%.2f",
-                      n, type, mode.getMode(mu, lambda), stddev);
-              var plot = new Plot(title, mode.getMode(mu, lambda), stddev);
-              for (int i = 1; i <= run; i++) {
-                var data = readcsv(path.resolve(String.format("run_%d(dev=%.2f).csv", i, stddev)));
-                plot.add("run#" + i, data.xData(), data.yData());
-              }
-              plot.show(path.resolve(String.format("dev=%.2f).png", stddev)));
-            });
-  }
-
-  static Data readcsv(Path path) {
-
-    System.out.println("Reading " + path);
-    var xData = new ArrayList<Integer>();
-    var yData = new ArrayList<Double>();
-    try ( var reader = new FileReader(path.toFile());
-             var rha = new CSVReaderHeaderAwareBuilder(reader).build()) {
-      do {
-        var row = rha.readMap();
-        if (row == null)
-          break;
-        var iteration = Integer.valueOf(row.get("Iteration"));
-        var average = Double.valueOf(row.get("Average"));
-//        if (iteration > 100000)
-//          break;
-        xData.add(iteration);
-        yData.add(average);
-      } while (true);
-    } catch (IOException | CsvValidationException ex) {
-      Logger.getLogger(ESMain.class.getName()).log(Level.SEVERE, null, ex);
-    }
-    return new Data(xData, yData);
-  }
-
-  record Data(List<Integer> xData, List<Double> yData) {
-
+    stddevs.forEach(stddev -> {
+      var title = String.format("%d-dimensional sphere %s experiment: mode=%s, stddev=%.2f",
+              n, type, mode.getMode(mu, lambda), stddev);
+      var plot = new Plot(title, mode.getMode(mu, lambda), stddev);
+      for (int i = 1; i <= run; i++) {
+        var data = readCSV(path.resolve(String.format("run_%d(dev=%.2f).csv", i, stddev)));
+        plot.add(String.format("run#%d%s", i, data.xData().size() >= Iter_limit ? "*" : ""),
+                data.xData(), data.yData());
+      }
+      plot.show(path.resolve(String.format("dev=%.2f).png", stddev)));
+    });
   }
 }
