@@ -17,6 +17,7 @@ package art.cctcc.nsphere;
 
 import art.cctcc.nsphere.enums.ESMode;
 import static art.cctcc.nsphere.Parameters.rngGaussian;
+import art.cctcc.nsphere.enums.ESType;
 import java.util.Arrays;
 import java.util.stream.IntStream;
 
@@ -51,6 +52,13 @@ public class ExperimentUNSS extends ExperimentFSS {
             1e-7 / Math.sqrt(2 * Math.sqrt(n)),
             1 / Math.sqrt(2 * n),
             epsilon0);
+  }
+
+  @Override
+  public String getTitle() {
+    
+    return String.format("%s: %s%s, initial stddev=%.2f",
+            super.getTitle(), ESType.UNSS.description, getESMode(), stddev);
   }
 
   public void updateStddev(int idv) {

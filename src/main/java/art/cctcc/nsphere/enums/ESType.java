@@ -21,8 +21,8 @@ package art.cctcc.nsphere.enums;
  */
 public enum ESType {
 
-  FSS("fixed-step-size"),
-  UNSS("uncorrelated n-step-size"),
+  FSS("Fixed-step-size"),
+  UNSS("Uncorrelated n-step-size"),
   OneFive("1/5-Rule");
 
   public String description;

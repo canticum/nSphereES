@@ -17,6 +17,7 @@ package art.cctcc.nsphere;
 
 import art.cctcc.nsphere.enums.ESMode;
 import static art.cctcc.nsphere.Parameters.*;
+import art.cctcc.nsphere.enums.ESType;
 import java.util.Arrays;
 
 /**
@@ -31,6 +32,13 @@ public class ExperimentFSS extends Experiment {
   }
 
   @Override
+  public String getTitle() {
+
+    return String.format("%s: %s%s, stddev=%.2f",
+            super.getTitle(), ESType.FSS.description, getESMode(), stddev);
+  }
+
+  @Override
   public double calcEval(Individual idv) {
 
     return Arrays.stream(idv.chromosome).map(i -> i * i).sum();
@@ -42,7 +50,7 @@ public class ExperimentFSS extends Experiment {
     var chromosome = parents.get(idv).chromosome;
     var mutant = Arrays.stream(chromosome)
             .map(gene -> gene + rngGaussian(stddev))
-            .toArray();  
+            .toArray();
     return new Individual(mutant);
   }
 }

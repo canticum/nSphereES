@@ -17,20 +17,21 @@ package art.cctcc.nsphere;
 
 import art.cctcc.nsphere.enums.ESMode;
 import static art.cctcc.nsphere.Parameters.rngGaussian;
+import art.cctcc.nsphere.enums.ESType;
 import java.util.Arrays;
 
 /**
  *
  * @author Jonathan Chang, Chun-yien <ccy@musicapoetica.org>
  */
-public class Experiment1Of5 extends ExperimentFSS {
+public class ExperimentOneFive extends ExperimentFSS {
 
   private double stddev_prime;
   private int g;
   private double a;
   private int g_s;
 
-  public Experiment1Of5(int n, ESMode mode,
+  public ExperimentOneFive(int n, ESMode mode,
           int mu, int lambda, double stddev, int g, double a) {
 
     super(n, mode, mu, lambda, stddev);
@@ -39,13 +40,21 @@ public class Experiment1Of5 extends ExperimentFSS {
     this.a = a;
   }
 
-  public Experiment1Of5(int n, ESMode mode,
+  public ExperimentOneFive(int n, ESMode mode,
           int mu, int lambda, double stddev, int g) {
 
     this(n, mode, mu, lambda, stddev, g, 0.817);
   }
 
+  @Override
+  public String getTitle() {
+
+    return String.format("%s: %s%s, initial stddev=%.2f",
+            super.getTitle(), ESType.OneFive.description, getESMode(), stddev);
+  }
+
   public void updateStddev() {
+
     var p_s = 1.0 * g_s / g;
     if (p_s > 0.2)
       this.stddev_prime /= a;

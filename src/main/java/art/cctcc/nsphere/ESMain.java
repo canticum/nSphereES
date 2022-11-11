@@ -54,9 +54,9 @@ public class ESMain {
     //OneFive
     var g = 10;
     var a = 0.817;
-    
+
     var exp = ESType.OneFive;
-    var type = exp.description;
+    final var type = exp.description;
 
     Function<Double, Experiment> getExperiment = stddev -> switch (exp) {
       case FSS ->
@@ -64,7 +64,7 @@ public class ESMain {
       case UNSS ->
         new ExperimentUNSS(n, mode, mu, lambda, stddev, epsilon0);
       default ->
-        new Experiment1Of5(n, mode, mu, lambda, stddev, g, a);
+        new ExperimentOneFive(n, mode, mu, lambda, stddev, g, a);
     };
 
     System.out.printf(
@@ -87,12 +87,15 @@ public class ESMain {
             .mapToObj(i
                     -> stddevs.stream()
                     .map(getExperiment)
-                    .peek(e -> {
-                      System.out.println();
-                      System.out.println(e.getTitle());
-                      System.out.println(e.run(path.resolve(String.format("run_%d(dev=%.2f).csv", i, e.stddev))));
-                      System.out.printf("Iterations = %s, eval sizes = %s\n", e.iterations, e.evals.size());
-                    })
+                    .peek(e -> System.out.printf(
+                    """
+                              
+                    %s
+                    %s
+                    Iterations = %s, eval sizes = %s
+                    """, e.getTitle(),
+                    e.run(path.resolve(String.format("run_%d(dev=%.2f).csv", i, e.stddev))),
+                    e.iterations, e.evals.size()))
                     .collect(Collectors.toMap(e -> e.stddev, e -> e.iterations))
             ).toList();
     System.out.println("*".repeat(80));
@@ -113,7 +116,7 @@ public class ESMain {
     }
 
     stddevs.forEach(stddev -> {
-      var title = String.format("%d-dimensional sphere %s experiment: mode=%s, stddev=%.2f",
+      var title = String.format("%d-Dimensional Sphere Experiment: %s%s, stddev=%.2f",
               n, type, mode.getMode(mu, lambda), stddev);
       var plot = new Plot(title, mode.getMode(mu, lambda), stddev);
       System.out.println();
@@ -123,7 +126,7 @@ public class ESMain {
         plot.add(String.format("run#%d%s", i, data.xData().size() > limit ? "*" : ""),
                 data.xData(), data.yData());
       }
-      plot.show(path.resolve(String.format("dev=%.2f).png", stddev)));
+      plot.show(path.resolve(String.format("plot(dev=%.2f).png", stddev)));
     });
   }
 }

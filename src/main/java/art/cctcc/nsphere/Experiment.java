@@ -63,6 +63,11 @@ public abstract class Experiment {
 
   protected abstract Individual mutation(int i);
 
+  public String getTitle() {
+
+    return String.format("%d-Dimensional Sphere Experiment", n);
+  }
+
   public String run(Path csv) {
 
     var start = Instant.now();
@@ -79,7 +84,7 @@ public abstract class Experiment {
             + IntStream.range(0, lambda)
                     .mapToObj(i -> "Y" + i)
                     .collect(Collectors.joining(",")));
-    var finished = false;
+    boolean finished;
 
     do {
 
@@ -98,7 +103,7 @@ public abstract class Experiment {
               .mapToDouble(this::getEval)
               .average().getAsDouble();
 
-      var line = String.format("%d,%.3f,", this.iterations, avg)
+      var line = String.format("%d,%.5f,", this.iterations, avg)
               + membersToString(parents) + ","
               + membersToString(offspring);
 
@@ -124,8 +129,9 @@ public abstract class Experiment {
   public double getEval(Individual idv) {
 
     if (idv.getEval() == -1) {
-      idv.setEval(this.calcEval(idv));
-      evals.add(idv.getEval());
+      var eval = this.calcEval(idv);
+      idv.setEval(eval);
+      evals.add(eval);
     }
     return idv.getEval();
   }
@@ -140,12 +146,6 @@ public abstract class Experiment {
 
   public String getESMode() {
 
-    return String.format("(%d%s%d)", this.mu, this.mode.symbol, this.lambda);
-  }
-
-  public String getTitle() {
-
-    return String.format("%d-dimensional sphere experiment: mode=%s, stddev=%.2f",
-            n, getESMode(), stddev);
+    return this.mode.getMode(mu, lambda);
   }
 }
