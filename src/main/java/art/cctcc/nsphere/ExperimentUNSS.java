@@ -26,8 +26,6 @@ import java.util.stream.IntStream;
  */
 public class ExperimentUNSS extends ExperimentFSS {
 
-  public static String TYPE = "uncorrelated n-step-size";
-
   private double[][] stddevs;
   private final double tau;
   private final double tauPrime;
@@ -68,12 +66,13 @@ public class ExperimentUNSS extends ExperimentFSS {
   }
 
   @Override
-  public double[] mutation(int idv) {
+  public Individual mutation(int idv) {
 
     this.updateStddev(idv);
     var chromosome = parents.get(idv).chromosome;
-    return IntStream.range(0, chromosome.length)
+    var mutant = IntStream.range(0, chromosome.length)
             .mapToDouble(i -> chromosome[i] + this.stddevs[idv][i] * rngGaussian(1))
             .toArray();
+    return new Individual(mutant);
   }
 }

@@ -15,6 +15,7 @@
  */
 package art.cctcc.nsphere;
 
+import art.cctcc.nsphere.enums.ESType;
 import art.cctcc.nsphere.enums.RNG;
 import art.cctcc.nsphere.enums.ESMode;
 import static art.cctcc.nsphere.Parameters.*;
@@ -43,18 +44,27 @@ public class ESMain {
     final var n = 10;
     final var run = 10;
     var stddevs = List.of(0.01, 0.1, 1.0);
-    art.cctcc.nsphere.enums.ESMode mode = ESMode.Plus;
+    var mode = ESMode.Plus;
     var mu = 1;
     var lambda = 1;
+
+    //UNSS
     var epsilon0 = 0.0001;
-    var exp = "unss";
-    var type = ExperimentUNSS.TYPE;
+
+    //OneFive
+    var g = 10;
+    var a = 0.817;
+    
+    var exp = ESType.OneFive;
+    var type = exp.description;
 
     Function<Double, Experiment> getExperiment = stddev -> switch (exp) {
-      case "fss" ->
-        new ExperimentFSS(n, ESMode.Plus, 1, 1, stddev);
-      default -> //"unss"
+      case FSS ->
+        new ExperimentFSS(n, mode, mu, lambda, stddev);
+      case UNSS ->
         new ExperimentUNSS(n, mode, mu, lambda, stddev, epsilon0);
+      default ->
+        new Experiment1Of5(n, mode, mu, lambda, stddev, g, a);
     };
 
     System.out.printf(
@@ -79,6 +89,7 @@ public class ESMain {
                     .map(getExperiment)
                     .peek(e -> {
                       System.out.println();
+                      System.out.println(e.getTitle());
                       System.out.println(e.run(path.resolve(String.format("run_%d(dev=%.2f).csv", i, e.stddev))));
                       System.out.printf("Iterations = %s, eval sizes = %s\n", e.iterations, e.evals.size());
                     })
@@ -107,7 +118,7 @@ public class ESMain {
       var plot = new Plot(title, mode.getMode(mu, lambda), stddev);
       System.out.println();
       for (int i = 1; i <= run; i++) {
-        var limit = limits.get(stddev)[1] * 3 / 2;
+        var limit = limits.get(stddev)[1] == UpperLimit ? 100 : limits.get(stddev)[1] * 3 / 2;
         var data = readCSV(path.resolve(String.format("run_%d(dev=%.2f).csv", i, stddev)), limit + 1);
         plot.add(String.format("run#%d%s", i, data.xData().size() > limit ? "*" : ""),
                 data.xData(), data.yData());

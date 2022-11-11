@@ -41,6 +41,7 @@ public class Parameters {
   public static RandomGenerator XOR;
   public static MersenneTwister MT;
   public static RNG rng = RNG.MT;
+  public static int UpperLimit = 10000000;
 
   public static void initRandom(long seed, RNG rng) {
 

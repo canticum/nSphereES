@@ -13,36 +13,22 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package art.cctcc.nsphere;
-
-import art.cctcc.nsphere.enums.ESMode;
-import static art.cctcc.nsphere.Parameters.*;
-import java.util.Arrays;
+package art.cctcc.nsphere.enums;
 
 /**
  *
  * @author Jonathan Chang, Chun-yien <ccy@musicapoetica.org>
  */
-public class ExperimentFSS extends Experiment {
+public enum ESType {
 
-  public ExperimentFSS(int n, ESMode mode, int mu, int lambda, double stddev) {
+  FSS("fixed-step-size"),
+  UNSS("uncorrelated n-step-size"),
+  OneFive("1/5-Rule");
 
-    super(n, mode, mu, lambda, stddev);
-  }
+  public String description;
 
-  @Override
-  public double calcEval(Individual idv) {
+  private ESType(String description) {
 
-    return Arrays.stream(idv.chromosome).map(i -> i * i).sum();
-  }
-
-  @Override
-  public Individual mutation(int idv) {
-
-    var chromosome = parents.get(idv).chromosome;
-    var mutant = Arrays.stream(chromosome)
-            .map(gene -> gene + rngGaussian(stddev))
-            .toArray();  
-    return new Individual(mutant);
+    this.description = description;
   }
 }

@@ -37,8 +37,6 @@ import java.util.stream.Stream;
  */
 public abstract class Experiment {
 
-  public static String TYPE;
-
   public List<Double> evals
           = Collections.synchronizedList(new ArrayList<>());
 
@@ -59,12 +57,11 @@ public abstract class Experiment {
     this.mu = mu;
     this.lambda = lambda;
     this.stddev = stddev;
-    System.out.println(getTitle());
   }
 
   protected abstract double calcEval(Individual idv);
 
-  protected abstract double[] mutation(int i);
+  protected abstract Individual mutation(int i);
 
   public String run(Path csv) {
 
@@ -86,7 +83,7 @@ public abstract class Experiment {
 
     do {
 
-      finished = this.iterations++ >= 10000000
+      finished = this.iterations++ >= UpperLimit
               || parents.stream()
                       .map(Individual::getEval)
                       .filter(eval -> eval > -1)
@@ -95,7 +92,6 @@ public abstract class Experiment {
       var offspring = IntStream.generate(() -> rngInt(mu))
               .limit(lambda)
               .mapToObj(this::mutation)
-              .map(Individual::new)
               .toList();
 
       var avg = parents.stream()
@@ -149,7 +145,7 @@ public abstract class Experiment {
 
   public String getTitle() {
 
-    return String.format("%d-dimensional sphere %s experiment: mode=%s, stddev=%.2f",
-            n, TYPE, getESMode(), stddev);
+    return String.format("%d-dimensional sphere experiment: mode=%s, stddev=%.2f",
+            n, getESMode(), stddev);
   }
 }
