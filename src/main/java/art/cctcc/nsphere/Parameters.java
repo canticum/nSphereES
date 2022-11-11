@@ -42,7 +42,6 @@ public class Parameters {
   public static final double P_mutation = 0.25;
   public static final double P_recombinant = 0.75;
   public static RNG rng = RNG.MT;
-  public static int Iter_limit = 80000;
 
   public static enum ESMode {
 
@@ -132,7 +131,7 @@ public class Parameters {
             time_elapsed.toMinutesPart(), time_elapsed.toSecondsPart());
   }
 
-  static Data readCSV(Path path) {
+  static Data readCSV(Path path, int limit) {
 
     System.out.println("Reading " + path);
     var xData = new ArrayList<Integer>();
@@ -145,7 +144,7 @@ public class Parameters {
           break;
         var iteration = Integer.valueOf(row.get("Iteration"));
         var average = Double.valueOf(row.get("Average"));
-        if (iteration > Iter_limit)
+        if (iteration > limit)
           break;
         xData.add(iteration);
         yData.add(average);

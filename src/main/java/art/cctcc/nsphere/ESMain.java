@@ -22,7 +22,10 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.Instant;
 import java.util.List;
+import java.util.Map;
+import java.util.Map.Entry;
 import java.util.function.Function;
+import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
 /**
@@ -69,22 +72,42 @@ public class ESMain {
 
     var start = Instant.now();
 
-    IntStream.rangeClosed(1, run).forEach(i -> {
-      System.out.println("Run#" + i);
-      stddevs.stream()
-              .map(getExperiment)
-              .peek(e -> System.out.println(e.run(path.resolve(String.format("run_%d(dev=%.2f).csv", i, e.stddev)))))
-              .forEach(e -> System.out.printf("Iterations = %s, eval sizes = %s\n", e.iterations, e.evals.size()));
-      System.out.println(time_elapsed(start));
-    });
+    var iterations = IntStream.rangeClosed(1, run)
+            .peek(i -> System.out.println("Run#" + i))
+            .mapToObj(i
+                    -> stddevs.stream()
+                    .map(getExperiment)
+                    .peek(e -> {
+                      System.out.println(e.run(path.resolve(String.format("run_%d(dev=%.2f).csv", i, e.stddev))));
+                      System.out.printf("Iterations = %s, eval sizes = %s\n", e.iterations, e.evals.size());
+                    })
+                    .collect(Collectors.toMap(e -> e.stddev, e -> e.iterations))
+            ).toList();
+    System.out.println("*******************************************");
+    System.out.println(time_elapsed(start));
+
+    var limits = iterations.get(0).entrySet().stream()
+            .map(e -> Map.entry(e.getKey(), new int[]{e.getValue(), 0}))
+            .collect(Collectors.toMap(Entry::getKey, Entry::getValue));
+    for (int i = 1; i < run; i++) {
+      for (var e : iterations.get(i).entrySet()) {
+        var key = e.getKey();
+        if (e.getValue() > limits.get(key)[0]) {
+          limits.get(key)[1] = limits.get(key)[0];
+          limits.get(key)[0] = e.getValue();
+        } else if (e.getValue() > limits.get(key)[1])
+          limits.get(key)[1] = e.getValue();
+      }
+    }
 
     stddevs.forEach(stddev -> {
       var title = String.format("%d-dimensional sphere %s experiment: mode=%s, stddev=%.2f",
               n, type, mode.getMode(mu, lambda), stddev);
       var plot = new Plot(title, mode.getMode(mu, lambda), stddev);
       for (int i = 1; i <= run; i++) {
-        var data = readCSV(path.resolve(String.format("run_%d(dev=%.2f).csv", i, stddev)));
-        plot.add(String.format("run#%d%s", i, data.xData().size() >= Iter_limit ? "*" : ""),
+        var limit = limits.get(stddev)[1] * 3 / 2;
+        var data = readCSV(path.resolve(String.format("run_%d(dev=%.2f).csv", i, stddev)), limit + 1);
+        plot.add(String.format("run#%d%s", i, data.xData().size() > limit ? "*" : ""),
                 data.xData(), data.yData());
       }
       plot.show(path.resolve(String.format("dev=%.2f).png", stddev)));
