@@ -23,17 +23,12 @@ import java.util.Arrays;
  */
 public class Individual {
 
-  private final double[] chromosome;
+  public final double[] chromosome;
   private double eval = -1;
 
   public Individual(double[] chromosome) {
 
     this.chromosome = chromosome;
-  }
-
-  public double[] getChromosome() {
-
-    return chromosome;
   }
 
   public double getEval() {

@@ -15,6 +15,7 @@ package art.cctcc.nsphere;
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+import art.cctcc.nsphere.enums.RNG;
 import com.opencsv.CSVReaderHeaderAwareBuilder;
 import com.opencsv.exceptions.CsvValidationException;
 import java.io.FileReader;
@@ -39,31 +40,7 @@ public class Parameters {
 
   public static RandomGenerator XOR;
   public static MersenneTwister MT;
-  public static final double P_mutation = 0.25;
-  public static final double P_recombinant = 0.75;
   public static RNG rng = RNG.MT;
-
-  public static enum ESMode {
-
-    Plus('+'), Comma(',');
-
-    public char symbol;
-
-    private ESMode(char symbol) {
-
-      this.symbol = symbol;
-    }
-
-    public String getMode(int mu, int lambda) {
-
-      return String.format("(%d%s%d)", mu, this.symbol, lambda);
-    }
-  }
-
-  public static enum RNG {
-
-    Xoshiro256PlusPlus, MersenneTwister, MT
-  }
 
   public static void initRandom(long seed, RNG rng) {
 

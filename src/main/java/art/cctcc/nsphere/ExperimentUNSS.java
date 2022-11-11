@@ -15,6 +15,7 @@
  */
 package art.cctcc.nsphere;
 
+import art.cctcc.nsphere.enums.ESMode;
 import static art.cctcc.nsphere.Parameters.rngGaussian;
 import java.util.Arrays;
 import java.util.stream.IntStream;
@@ -32,7 +33,7 @@ public class ExperimentUNSS extends ExperimentFSS {
   private final double tauPrime;
   private final double epsilon0;
 
-  public ExperimentUNSS(int n, Parameters.ESMode mode,
+  public ExperimentUNSS(int n, ESMode mode,
           int mu, int lambda, double stddev,
           double tau, double tauPrime, double epsilon0) {
 
@@ -45,7 +46,7 @@ public class ExperimentUNSS extends ExperimentFSS {
     this.epsilon0 = epsilon0;
   }
 
-  public ExperimentUNSS(int n, Parameters.ESMode mode,
+  public ExperimentUNSS(int n, ESMode mode,
           int mu, int lambda, double stddev, double epsilon0) {
 
     this(n, mode, mu, lambda, stddev,
@@ -70,7 +71,7 @@ public class ExperimentUNSS extends ExperimentFSS {
   public double[] mutation(int idv) {
 
     this.updateStddev(idv);
-    var chromosome = parents.get(idv).getChromosome();
+    var chromosome = parents.get(idv).chromosome;
     return IntStream.range(0, chromosome.length)
             .mapToDouble(i -> chromosome[i] + this.stddevs[idv][i] * rngGaussian(1))
             .toArray();

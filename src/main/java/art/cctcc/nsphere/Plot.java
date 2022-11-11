@@ -35,8 +35,8 @@ import org.knowm.xchart.style.markers.None;
  */
 public class Plot {
 
-  private String title;
-  private XYChart chart;
+  private final String title;
+  private final XYChart chart;
 
   public Plot(String title, String esmode, double stddev) {
 
@@ -46,7 +46,7 @@ public class Plot {
             .xAxisTitle(String.format("Iterations"))
             .yAxisTitle("Evals")
             .width(1200)
-            .height(600)
+            .height(800)
             .build();
   }
 
