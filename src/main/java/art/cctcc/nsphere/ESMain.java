@@ -15,6 +15,10 @@
  */
 package art.cctcc.nsphere;
 
+import art.cctcc.nsphere.experiments.ExperimentFSS;
+import art.cctcc.nsphere.experiments.ExperimentOneFive;
+import art.cctcc.nsphere.experiments.ExperimentUNSS;
+import art.cctcc.nsphere.experiments.AbsExp;
 import art.cctcc.nsphere.enums.ESType;
 import art.cctcc.nsphere.enums.RNG;
 import art.cctcc.nsphere.enums.ESMode;
@@ -43,7 +47,7 @@ public class ESMain {
 
     final var n = 10;
     final var run = 10;
-    var stddevs = List.of(0.01, 0.1, 1.0);
+    var sigmas = List.of(0.01, 0.1, 1.0);
     var mode = ESMode.Plus;
     var mu = 1;
     var lambda = 1;
@@ -58,13 +62,13 @@ public class ESMain {
     var exp = ESType.OneFive;
     final var type = exp.description;
 
-    Function<Double, Experiment> getExperiment = stddev -> switch (exp) {
+    Function<Double, AbsExp> getExperiment = sigma -> switch (exp) {
       case FSS ->
-        new ExperimentFSS(n, mode, mu, lambda, stddev);
+        new ExperimentFSS(n, mode, mu, lambda, sigma);
       case UNSS ->
-        new ExperimentUNSS(n, mode, mu, lambda, stddev, epsilon0);
+        new ExperimentUNSS(n, mode, mu, lambda, sigma, epsilon0);
       default ->
-        new ExperimentOneFive(n, mode, mu, lambda, stddev, g, a);
+        new ExperimentOneFive(n, mode, mu, lambda, sigma, g, a);
     };
 
     System.out.printf(
@@ -85,7 +89,7 @@ public class ESMain {
     var iterations = IntStream.rangeClosed(1, run)
             .peek(i -> System.out.println("*".repeat(80) + "\nRun#" + i))
             .mapToObj(i
-                    -> stddevs.stream()
+                    -> sigmas.stream()
                     .map(getExperiment)
                     .peek(e -> System.out.printf(
                     """
@@ -94,9 +98,9 @@ public class ESMain {
                     %s
                     Iterations = %s, eval sizes = %s
                     """, e.getTitle(),
-                    e.run(path.resolve(String.format("run_%d(dev=%.2f).csv", i, e.stddev))),
+                    e.run(path.resolve(String.format("run_%d(sigma=%.2f).csv", i, e.sigma))),
                     e.iterations, e.evals.size()))
-                    .collect(Collectors.toMap(e -> e.stddev, e -> e.iterations))
+                    .collect(Collectors.toMap(e -> e.sigma, e -> e.iterations))
             ).toList();
     System.out.println("*".repeat(80));
     System.out.println(time_elapsed(start));
@@ -115,18 +119,18 @@ public class ESMain {
       }
     }
 
-    stddevs.forEach(stddev -> {
-      var title = String.format("%d-Dimensional Sphere Experiment: %s%s, stddev=%.2f",
-              n, type, mode.getMode(mu, lambda), stddev);
-      var plot = new Plot(title, mode.getMode(mu, lambda), stddev);
+    sigmas.forEach(sigma -> {
+      var title = String.format("%d-Dimensional Sphere Model: %s%s, sigma=%.2f",
+              n, type, mode.getMode(mu, lambda), sigma);
+      var plot = new Plot(title);
       System.out.println();
       for (int i = 1; i <= run; i++) {
-        var limit = limits.get(stddev)[1] == UpperLimit ? 100 : limits.get(stddev)[1] * 3 / 2;
-        var data = readCSV(path.resolve(String.format("run_%d(dev=%.2f).csv", i, stddev)), limit + 1);
+        var limit = limits.get(sigma)[1] == UpperLimit ? 100 : limits.get(sigma)[1] * 3 / 2;
+        var data = readCSV(path.resolve(String.format("run_%d(sigma=%.2f).csv", i, sigma)), limit + 1);
         plot.add(String.format("run#%d%s", i, data.xData().size() > limit ? "*" : ""),
                 data.xData(), data.yData());
       }
-      plot.show(path.resolve(String.format("plot(dev=%.2f).png", stddev)));
+      plot.show(path.resolve(String.format("plot(sigma=%.2f).png", sigma)));
     });
   }
 }

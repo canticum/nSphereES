@@ -13,29 +13,27 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package art.cctcc.nsphere;
+package art.cctcc.nsphere.experiments;
 
+import art.cctcc.nsphere.Individual;
 import art.cctcc.nsphere.enums.ESMode;
-import static art.cctcc.nsphere.Parameters.*;
-import art.cctcc.nsphere.enums.ESType;
 import java.util.Arrays;
 
 /**
  *
  * @author Jonathan Chang, Chun-yien <ccy@musicapoetica.org>
  */
-public class ExperimentFSS extends Experiment {
+public abstract class AbsExpNDimSphere extends AbsExp {
 
-  public ExperimentFSS(int n, ESMode mode, int mu, int lambda, double stddev) {
+  public AbsExpNDimSphere(int n, ESMode mode, int mu, int lambda, double sigma) {
 
-    super(n, mode, mu, lambda, stddev);
+    super(n, mode, mu, lambda, sigma);
   }
 
   @Override
   public String getTitle() {
 
-    return String.format("%s: %s%s, stddev=%.2f",
-            super.getTitle(), ESType.FSS.description, getESMode(), stddev);
+    return String.format("%d-Dimensional Sphere Model", n);
   }
 
   @Override
@@ -44,16 +42,6 @@ public class ExperimentFSS extends Experiment {
     return Arrays.stream(idv.chromosome).map(i -> i * i).sum();
   }
 
-  @Override
-  public Individual mutation(int idv) {
-
-    var select = rngInt(mu);
-    var chromosome = parents.get(select).chromosome;
-    var mutant = Arrays.stream(chromosome)
-            .map(gene -> gene + rngGaussian(stddev))
-            .toArray();
-    return new Individual(mutant);
-  }
 
   @Override
   protected boolean goal() {

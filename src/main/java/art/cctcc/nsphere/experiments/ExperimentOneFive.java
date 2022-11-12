@@ -13,8 +13,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package art.cctcc.nsphere;
+package art.cctcc.nsphere.experiments;
 
+import art.cctcc.nsphere.Individual;
 import art.cctcc.nsphere.enums.ESMode;
 import static art.cctcc.nsphere.Parameters.rngGaussian;
 import static art.cctcc.nsphere.Parameters.rngInt;
@@ -25,19 +26,19 @@ import java.util.Arrays;
  *
  * @author Jonathan Chang, Chun-yien <ccy@musicapoetica.org>
  */
-public class ExperimentOneFive extends ExperimentFSS {
+public class ExperimentOneFive extends AbsExpNDimSphere {
 
-  private double[] stddev_prime;
+  private double[] sigma_prime;
   private int g;
   private double a;
   private int[] g_s;
 
   public ExperimentOneFive(int n, ESMode mode,
-          int mu, int lambda, double stddev, int g, double a) {
+          int mu, int lambda, double sigma, int g, double a) {
 
-    super(n, mode, mu, lambda, stddev);
-    this.stddev_prime = new double[lambda];
-    Arrays.fill(this.stddev_prime, stddev);
+    super(n, mode, mu, lambda, sigma);
+    this.sigma_prime = new double[lambda];
+    Arrays.fill(this.sigma_prime, sigma);
     this.g = g;
     this.a = a;
     this.g_s = new int[lambda];
@@ -45,40 +46,40 @@ public class ExperimentOneFive extends ExperimentFSS {
   }
 
   public ExperimentOneFive(int n, ESMode mode,
-          int mu, int lambda, double stddev, int g) {
+          int mu, int lambda, double sigma, int g) {
 
-    this(n, mode, mu, lambda, stddev, g, 0.817);
+    this(n, mode, mu, lambda, sigma, g, 0.817);
   }
 
   @Override
   public String getTitle() {
 
-    return String.format("%s: %s%s, initial stddev=%.2f",
-            super.getTitle(), ESType.OneFive.description, getESMode(), stddev);
+    return String.format("%s: %s%s, initial sigma=%.2f",
+            super.getTitle(), ESType.OneFive.description, getESMode(), sigma);
   }
 
-  public void updateStddev(int idv) {
+  public void updateSigma(int offspring_index) {
 
-    var p_s = 1.0 * g_s[idv] / g;
+    var p_s = 1.0 * g_s[offspring_index] / g;
     if (p_s > 0.2)
-      this.stddev_prime[idv] /= a;
+      this.sigma_prime[offspring_index] /= a;
     else if (p_s < 0.2)
-      this.stddev_prime[idv] *= a;
-    this.g_s[idv] = 0;
+      this.sigma_prime[offspring_index] *= a;
+    this.g_s[offspring_index] = 0;
   }
 
   @Override
-  public Individual mutation(int idv) {
+  public Individual mutation(int offspring_index) {
 
     var select = rngInt(mu);
     if (this.iterations % this.g == 0)
-      this.updateStddev(idv);
+      this.updateSigma(offspring_index);
     var chromosome = parents.get(select).chromosome;
     var mutant_idv = new Individual(Arrays.stream(chromosome)
-            .map(gene -> gene + rngGaussian(stddev_prime[idv]))
+            .map(gene -> gene + rngGaussian(sigma_prime[offspring_index]))
             .toArray());
     if (this.getEval(mutant_idv) < this.getEval(parents.get(select)))
-      g_s[idv]++;
+      g_s[offspring_index]++;
     return mutant_idv;
   }
 }

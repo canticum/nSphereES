@@ -13,8 +13,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package art.cctcc.nsphere;
+package art.cctcc.nsphere.experiments;
 
+import art.cctcc.nsphere.Individual;
 import art.cctcc.nsphere.enums.ESMode;
 import static art.cctcc.nsphere.Parameters.*;
 import java.io.IOException;
@@ -35,7 +36,7 @@ import java.util.stream.Stream;
  *
  * @author Jonathan Chang, Chun-yien <ccy@musicapoetica.org>
  */
-public abstract class Experiment {
+public abstract class AbsExp {
 
   public List<Double> evals
           = Collections.synchronizedList(new ArrayList<>());
@@ -45,18 +46,18 @@ public abstract class Experiment {
   public final int mu;
   public final int lambda;
 
-  public double stddev;
+  public double sigma;
   public int iterations;
 
   protected List<Individual> parents;
 
-  public Experiment(int n, ESMode mode, int mu, int lambda, double stddev) {
+  public AbsExp(int n, ESMode mode, int mu, int lambda, double sigma) {
 
     this.n = n;
     this.mode = mode;
     this.mu = mu;
     this.lambda = lambda;
-    this.stddev = stddev;
+    this.sigma = sigma;
   }
 
   protected abstract double calcEval(Individual idv);
@@ -65,10 +66,7 @@ public abstract class Experiment {
 
   protected abstract boolean goal();
   
-  public String getTitle() {
-
-    return String.format("%d-Dimensional Sphere Experiment", n);
-  }
+  public abstract String getTitle();
 
   public String run(Path csv) {
 

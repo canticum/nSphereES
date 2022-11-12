@@ -38,7 +38,7 @@ public class Plot {
   private final String title;
   private final XYChart chart;
 
-  public Plot(String title, String esmode, double stddev) {
+  public Plot(String title) {
 
     this.title = title;
     this.chart = new XYChartBuilder()
