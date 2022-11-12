@@ -63,6 +63,8 @@ public abstract class Experiment {
 
   protected abstract Individual mutation(int i);
 
+  protected abstract boolean goal();
+  
   public String getTitle() {
 
     return String.format("%d-Dimensional Sphere Experiment", n);
@@ -109,10 +111,7 @@ public abstract class Experiment {
               .limit(mu)
               .toList();
 
-      finished = parents.stream()
-              .map(Individual::getEval)
-              .filter(eval -> eval > -1)
-              .anyMatch(eval -> eval <= 0.0005);
+      finished = goal();
 
       this.iterations++;
     }

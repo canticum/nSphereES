@@ -53,4 +53,13 @@ public class ExperimentFSS extends Experiment {
             .toArray();
     return new Individual(mutant);
   }
+
+  @Override
+  protected boolean goal() {
+    
+    return parents.stream()
+              .map(Individual::getEval)
+              .filter(eval -> eval > -1)
+              .anyMatch(eval -> eval <= 0.0005);
+  }
 }
