@@ -17,6 +17,7 @@ package art.cctcc.nsphere;
 
 import art.cctcc.nsphere.enums.ESMode;
 import static art.cctcc.nsphere.Parameters.rngGaussian;
+import static art.cctcc.nsphere.Parameters.rngInt;
 import art.cctcc.nsphere.enums.ESType;
 import java.util.Arrays;
 
@@ -26,18 +27,21 @@ import java.util.Arrays;
  */
 public class ExperimentOneFive extends ExperimentFSS {
 
-  private double stddev_prime;
+  private double[] stddev_prime;
   private int g;
   private double a;
-  private int g_s;
+  private int[] g_s;
 
   public ExperimentOneFive(int n, ESMode mode,
           int mu, int lambda, double stddev, int g, double a) {
 
     super(n, mode, mu, lambda, stddev);
-    this.stddev_prime = stddev;
+    this.stddev_prime = new double[lambda];
+    Arrays.fill(this.stddev_prime, stddev);
     this.g = g;
     this.a = a;
+    this.g_s = new int[lambda];
+    Arrays.fill(g_s, 0);
   }
 
   public ExperimentOneFive(int n, ESMode mode,
@@ -53,27 +57,28 @@ public class ExperimentOneFive extends ExperimentFSS {
             super.getTitle(), ESType.OneFive.description, getESMode(), stddev);
   }
 
-  public void updateStddev() {
+  public void updateStddev(int idv) {
 
-    var p_s = 1.0 * g_s / g;
+    var p_s = 1.0 * g_s[idv] / g;
     if (p_s > 0.2)
-      this.stddev_prime /= a;
+      this.stddev_prime[idv] /= a;
     else if (p_s < 0.2)
-      this.stddev_prime *= a;
-    this.g_s = 0;
+      this.stddev_prime[idv] *= a;
+    this.g_s[idv] = 0;
   }
 
   @Override
   public Individual mutation(int idv) {
 
+    var select = rngInt(mu);
     if (this.iterations % this.g == 0)
-      this.updateStddev();
-    var chromosome = parents.get(idv).chromosome;
+      this.updateStddev(idv);
+    var chromosome = parents.get(select).chromosome;
     var mutant_idv = new Individual(Arrays.stream(chromosome)
-            .map(gene -> gene + rngGaussian(stddev_prime))
+            .map(gene -> gene + rngGaussian(stddev_prime[idv]))
             .toArray());
-    if (this.getEval(mutant_idv) < this.getEval(parents.get(idv)))
-      g_s++;
+    if (this.getEval(mutant_idv) < this.getEval(parents.get(select)))
+      g_s[idv]++;
     return mutant_idv;
   }
 }

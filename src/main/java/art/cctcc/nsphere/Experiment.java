@@ -90,8 +90,7 @@ public abstract class Experiment {
 
     while (this.iterations < UpperLimit && !finished) {
 
-      var offspring = IntStream.generate(() -> rngInt(mu))
-              .limit(lambda)
+      var offspring = IntStream.range(0, lambda)
               .mapToObj(this::mutation)
               .toList();
 

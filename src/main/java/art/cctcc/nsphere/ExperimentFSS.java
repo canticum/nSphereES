@@ -47,7 +47,8 @@ public class ExperimentFSS extends Experiment {
   @Override
   public Individual mutation(int idv) {
 
-    var chromosome = parents.get(idv).chromosome;
+    var select = rngInt(mu);
+    var chromosome = parents.get(select).chromosome;
     var mutant = Arrays.stream(chromosome)
             .map(gene -> gene + rngGaussian(stddev))
             .toArray();

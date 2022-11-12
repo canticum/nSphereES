@@ -16,7 +16,7 @@
 package art.cctcc.nsphere;
 
 import art.cctcc.nsphere.enums.ESMode;
-import static art.cctcc.nsphere.Parameters.rngGaussian;
+import static art.cctcc.nsphere.Parameters.*;
 import art.cctcc.nsphere.enums.ESType;
 import java.util.Arrays;
 import java.util.stream.IntStream;
@@ -76,10 +76,11 @@ public class ExperimentUNSS extends ExperimentFSS {
   @Override
   public Individual mutation(int idv) {
 
-    this.updateStddev(idv);
-    var chromosome = parents.get(idv).chromosome;
+    var select = rngInt(mu);
+    this.updateStddev(select);
+    var chromosome = parents.get(select).chromosome;
     var mutant = IntStream.range(0, chromosome.length)
-            .mapToDouble(i -> chromosome[i] + this.stddevs[idv][i] * rngGaussian(1))
+            .mapToDouble(i -> chromosome[i] + this.stddevs[select][i] * rngGaussian(1))
             .toArray();
     return new Individual(mutant);
   }
