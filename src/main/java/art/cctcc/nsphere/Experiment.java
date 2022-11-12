@@ -84,15 +84,9 @@ public abstract class Experiment {
             + IntStream.range(0, lambda)
                     .mapToObj(i -> "Y" + i)
                     .collect(Collectors.joining(",")));
-    boolean finished;
+    boolean finished = false;
 
-    do {
-
-      finished = this.iterations++ >= UpperLimit
-              || parents.stream()
-                      .map(Individual::getEval)
-                      .filter(eval -> eval > -1)
-                      .anyMatch(eval -> eval <= 0.0005);
+    while (this.iterations < UpperLimit && !finished) {
 
       var offspring = IntStream.generate(() -> rngInt(mu))
               .limit(lambda)
@@ -115,7 +109,13 @@ public abstract class Experiment {
               .limit(mu)
               .toList();
 
-    } while (!finished);
+      finished = parents.stream()
+              .map(Individual::getEval)
+              .filter(eval -> eval > -1)
+              .anyMatch(eval -> eval <= 0.0005);
+
+      this.iterations++;
+    }
 
     try {
       Files.write(csv, output);
