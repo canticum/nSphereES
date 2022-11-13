@@ -18,16 +18,20 @@ package art.cctcc.nsphere.experiments;
 import art.cctcc.nsphere.Individual;
 import art.cctcc.nsphere.enums.ESMode;
 import java.util.Arrays;
+import java.util.List;
+import java.util.stream.Stream;
 
 /**
  *
  * @author Jonathan Chang, Chun-yien <ccy@musicapoetica.org>
  */
-public abstract class NDimSphere extends AbsExperiment {
+public abstract class NDimSphere
+        extends AbsExperiment<Individual> {
 
-  public NDimSphere(int n, ESMode mode, int mu, int lambda, double sigma) {
+  public NDimSphere(int n, ESMode mode, int mu, int lambda,
+          int n_sigma, double sigma) {
 
-    super(n, mode, mu, lambda, sigma);
+    super(n, mode, mu, lambda, n_sigma, sigma);
   }
 
   @Override
@@ -42,13 +46,25 @@ public abstract class NDimSphere extends AbsExperiment {
     return Arrays.stream(idv.chromosome).map(i -> i * i).sum();
   }
 
-
   @Override
   protected boolean goal() {
-    
+
     return parents.stream()
-              .map(Individual::getEval)
-              .filter(eval -> eval != -1)
-              .anyMatch(eval -> eval <= 0.0005);
+            .map(Individual::getEval)
+            .filter(eval -> eval != -1)
+            .anyMatch(eval -> eval <= 0.0005);
+  }
+
+  @Override
+  protected List<Individual> generate() {
+
+    return Stream.generate(() -> {
+      var chromosome = new double[n];
+      Arrays.fill(chromosome, 1.0);
+      var sigmas = new double[n_sigma];
+      Arrays.fill(sigmas, sigma);
+      return new Individual(chromosome, sigmas);
+    })
+            .limit(mu).toList();
   }
 }

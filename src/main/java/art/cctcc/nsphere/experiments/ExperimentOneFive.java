@@ -28,21 +28,17 @@ import java.util.Arrays;
  */
 public class ExperimentOneFive extends NDimSphere {
 
-  private double[] sigma_prime;
   private int g;
   private double a;
-  private int[] g_s;
+  private int g_s;
+  private int mutation_count;
 
   public ExperimentOneFive(int n, ESMode mode,
           int mu, int lambda, double sigma, int g, double a) {
 
-    super(n, mode, mu, lambda, sigma);
-    this.sigma_prime = new double[lambda];
-    Arrays.fill(this.sigma_prime, sigma);
+    super(n, mode, mu, lambda, 1, sigma);
     this.g = g;
     this.a = a;
-    this.g_s = new int[lambda];
-    Arrays.fill(g_s, 0);
   }
 
   public ExperimentOneFive(int n, ESMode mode,
@@ -58,28 +54,32 @@ public class ExperimentOneFive extends NDimSphere {
             super.getTitle(), ESType.OneFive.description, getESMode(), sigma);
   }
 
-  public void updateSigma(int offspring_index) {
-
-    var p_s = 1.0 * g_s[offspring_index] / g;
-    if (p_s > 0.2)
-      this.sigma_prime[offspring_index] /= a;
-    else if (p_s < 0.2)
-      this.sigma_prime[offspring_index] *= a;
-    this.g_s[offspring_index] = 0;
-  }
-
   @Override
   public Individual mutation(int offspring_index) {
 
-    var select = rngInt(mu);
-    if (this.iterations % this.g == 0)
-      this.updateSigma(offspring_index);
-    var chromosome = parents.get(select).chromosome;
-    var mutant_idv = new Individual(Arrays.stream(chromosome)
-            .map(gene -> gene + rngGaussian(sigma_prime[offspring_index]))
-            .toArray());
-    if (this.getEval(mutant_idv) < this.getEval(parents.get(select)))
-      g_s[offspring_index]++;
-    return mutant_idv;
+    this.mutation_count++;
+    var parent = parents.get(rngInt(mu));
+    var chromosome = new double[n];
+    Arrays.setAll(chromosome, i -> parent.chromosome[i]
+            + rngGaussian(parent.sigmas[n_sigma > 1 ? i : 0]));
+    var sigmas = Arrays.copyOf(parent.sigmas, n_sigma);
+    var offspring = new Individual(chromosome, sigmas);
+    if (this.getEval(offspring) < this.getEval(parent))
+      this.g_s++;
+    if (this.mutation_count >= this.g) {
+      var p_s = 1.0 * this.g_s / this.g;
+      for (int i = 0; i < offspring.sigmas.length; i++) {
+        if (p_s > 0.2) {
+          parent.sigmas[i] /= a;
+          offspring.sigmas[i] /= a;
+        } else if (p_s < 0.2) {
+          parent.sigmas[i] *= a;
+          offspring.sigmas[i] *= a;
+        }
+      }
+      this.g_s = 0;
+      this.mutation_count = 0;
+    }
+    return offspring;
   }
 }

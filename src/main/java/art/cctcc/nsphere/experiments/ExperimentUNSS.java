@@ -20,7 +20,6 @@ import art.cctcc.nsphere.enums.ESMode;
 import static art.cctcc.nsphere.Parameters.*;
 import art.cctcc.nsphere.enums.ESType;
 import java.util.Arrays;
-import java.util.stream.IntStream;
 
 /**
  *
@@ -28,19 +27,14 @@ import java.util.stream.IntStream;
  */
 public class ExperimentUNSS extends NDimSphere {
 
-  private double[][] sigmas;
   private final double tau;
   private final double tauPrime;
   private final double epsilon0;
 
-  public ExperimentUNSS(int n, ESMode mode,
-          int mu, int lambda, double sigma,
+  public ExperimentUNSS(int n, ESMode mode, int mu, int lambda, double sigma,
           double tau, double tauPrime, double epsilon0) {
 
-    super(n, mode, mu, lambda, sigma);
-    this.sigmas = new double[mu][n];
-    IntStream.range(0, mu)
-            .forEach(i -> Arrays.fill(this.sigmas[i], sigma));
+    super(n, mode, mu, lambda, n, sigma);
     this.tau = tau;
     this.tauPrime = tauPrime;
     this.epsilon0 = epsilon0;
@@ -57,32 +51,26 @@ public class ExperimentUNSS extends NDimSphere {
 
   @Override
   public String getTitle() {
-    
+
     return String.format("%s: %s%s, initial sigma=%.2f",
             super.getTitle(), ESType.UNSS.description, getESMode(), sigma);
-  }
-
-  public void updateSigma(int idv) {
-
-    var gaussian_prime = rngGaussian(1);
-    IntStream.range(0, n).forEach(i -> {
-      var d_prime = this.sigmas[idv][i] * Math.pow(Math.E,
-              tauPrime * gaussian_prime + tau * rngGaussian(1));
-      if (d_prime < this.epsilon0)
-        d_prime = this.epsilon0;
-      this.sigmas[idv][i] = d_prime;
-    });
   }
 
   @Override
   public Individual mutation(int offspring_index) {
 
-    var select = rngInt(mu);
-    this.updateSigma(select);
-    var chromosome = parents.get(select).chromosome;
-    var mutant = IntStream.range(0, chromosome.length)
-            .mapToDouble(i -> chromosome[i] + this.sigmas[select][i] * rngGaussian(1))
-            .toArray();
-    return new Individual(mutant);
+    var parent = parents.get(rngInt(mu));
+    var gaussian_prime = rngGaussian(1);
+
+    var chromosome = new double[n];
+    var sigmas = new double[n_sigma];
+
+    Arrays.setAll(sigmas, i
+            -> Math.max(parent.sigmas[i] * Math.pow(Math.E,
+                    tauPrime * gaussian_prime + tau * rngGaussian(1)),
+                    epsilon0));
+    Arrays.setAll(chromosome, i
+            -> parent.chromosome[i] + sigmas[i] * rngGaussian(1));
+    return new Individual(chromosome, sigmas);
   }
 }

@@ -53,20 +53,22 @@ public class ESMain {
     var lambda = 1;
 
     //UNSS
-    var epsilon0 = 0.0001;
+    var tau = 1e-7 / Math.sqrt(2 * Math.sqrt(n));
+    var tau_prime = 1 / Math.sqrt(2 * n);
+    var epsilon0 = 1e-4;
 
     //OneFive
-    var g = 10;
+    var g = 5;
     var a = 0.817;
 
-    var exp = ESType.OneFive;
+    var exp = ESType.UNSS;
     final var description = exp.description;
 
     Function<Double, AbsExperiment> getExperiment = sigma -> switch (exp) {
       case FSS ->
         new ExperimentFSS(n, mode, mu, lambda, sigma);
       case UNSS ->
-        new ExperimentUNSS(n, mode, mu, lambda, sigma, epsilon0);
+        new ExperimentUNSS(n, mode, mu, lambda, sigma, tau, tau_prime, epsilon0);
       default ->
         new ExperimentOneFive(n, mode, mu, lambda, sigma, g, a);
     };
@@ -124,7 +126,7 @@ public class ESMain {
       var plot = new Plot(title);
       System.out.println();
       for (int i = 1; i <= run; i++) {
-        var limit = limits.get(sigma)[1] == UpperLimit ? 100 : limits.get(sigma)[1] * 3 / 2;
+        var limit = limits.get(sigma)[1] == UpperLimit ? 100 : limits.get(sigma)[1] * 2;
         var data = readCSV(path.resolve(String.format("run_%d(sigma=%.2f).csv", i, sigma)), limit + 1);
         plot.add(String.format("run#%d%s", i, data.xData().size() > limit ? "*" : ""),
                 data.xData(), data.yData());

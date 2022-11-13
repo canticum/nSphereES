@@ -27,9 +27,9 @@ import java.util.Arrays;
  */
 public class ExperimentFSS extends NDimSphere {
 
-  public ExperimentFSS(int n, ESMode mode, int mu, int lambda, double stddev) {
+  public ExperimentFSS(int n, ESMode mode, int mu, int lambda, double sigma) {
 
-    super(n, mode, mu, lambda, stddev);
+    super(n, mode, mu, lambda, 1, sigma);
   }
 
   @Override
@@ -42,11 +42,10 @@ public class ExperimentFSS extends NDimSphere {
   @Override
   public Individual mutation(int offspring_index) {
 
-    var select = rngInt(mu);
-    var chromosome = parents.get(select).chromosome;
-    var mutant = Arrays.stream(chromosome)
-            .map(gene -> gene + rngGaussian(sigma))
-            .toArray();
-    return new Individual(mutant);
+    var parent = parents.get(rngInt(mu));
+    var chromosome = new double[n];
+    Arrays.setAll(chromosome, i -> parent.chromosome[i]
+            + rngGaussian(parent.sigmas[n_sigma > 1 ? i : 0]));
+    return new Individual(chromosome, parent.sigmas);
   }
 }

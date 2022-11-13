@@ -23,6 +23,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.Instant;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
@@ -35,8 +36,9 @@ import java.util.stream.Stream;
 /**
  *
  * @author Jonathan Chang, Chun-yien <ccy@musicapoetica.org>
+ * @param <I> Generic of Individual
  */
-public abstract class AbsExperiment {
+public abstract class AbsExperiment<I extends Individual> {
 
   public List<Double> evals
           = Collections.synchronizedList(new ArrayList<>());
@@ -46,36 +48,38 @@ public abstract class AbsExperiment {
   public final int mu;
   public final int lambda;
 
+  public int n_sigma;
   public double sigma;
+
+  protected List<I> parents;
+
   public int iterations;
 
-  protected List<Individual> parents;
-
-  public AbsExperiment(int n, ESMode mode, int mu, int lambda, double sigma) {
+  public AbsExperiment(int n, ESMode mode, int mu, int lambda,
+          int n_sigma, double sigma) {
 
     this.n = n;
     this.mode = mode;
     this.mu = mu;
     this.lambda = lambda;
+    this.n_sigma = n_sigma;
     this.sigma = sigma;
   }
 
-  protected abstract double calcEval(Individual idv);
+  public abstract String getTitle();
 
-  protected abstract Individual mutation(int i);
+  protected abstract double calcEval(I idv);
+
+  protected abstract I mutation(int i);
 
   protected abstract boolean goal();
-  
-  public abstract String getTitle();
+
+  protected abstract List<I> generate();
 
   public String run(Path csv) {
 
     var start = Instant.now();
 
-    parents = Stream.generate(() -> Individual.generate(n))
-            .limit(mu).toList();
-
-    // ES loop
     var output = new ArrayList<String>();
     output.add("Iteration,Average,"
             + IntStream.range(0, mu)
@@ -84,15 +88,17 @@ public abstract class AbsExperiment {
             + IntStream.range(0, lambda)
                     .mapToObj(i -> "Y" + i)
                     .collect(Collectors.joining(",")));
-    boolean finished = false;
-
+    
+    // ES loop
+    this.parents = generate();
+    var finished = false;
     while (this.iterations < UpperLimit && !finished) {
 
       var offspring = IntStream.range(0, lambda)
               .mapToObj(this::mutation)
               .toList();
 
-      var avg = parents.stream()
+      var avg = parents.stream()          
               .mapToDouble(this::getEval)
               .average().getAsDouble();
 
@@ -102,8 +108,8 @@ public abstract class AbsExperiment {
 
       output.add(line);
 
-      parents = Stream.concat(offspring.stream(), parents.stream())
-              .limit(mode == ESMode.Plus ? lambda + mu : lambda)
+      this.parents = Stream.concat(offspring.stream(),
+              mode == ESMode.Plus ? parents.stream() : Stream.empty())
               .sorted(Comparator.comparing(this::getEval))
               .limit(mu)
               .toList();
@@ -122,7 +128,7 @@ public abstract class AbsExperiment {
     return time_elapsed(start);
   }
 
-  public double getEval(Individual idv) {
+  public double getEval(I idv) {
 
     if (idv.getEval() == -1) {
       var eval = this.calcEval(idv);
@@ -132,7 +138,7 @@ public abstract class AbsExperiment {
     return idv.getEval();
   }
 
-  public String membersToString(List<Individual> members) {
+  public String membersToString(List<I> members) {
 
     return members.stream()
             .map(this::getEval)

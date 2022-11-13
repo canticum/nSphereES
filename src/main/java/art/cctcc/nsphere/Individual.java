@@ -16,6 +16,7 @@
 package art.cctcc.nsphere;
 
 import java.util.Arrays;
+import java.util.stream.Collectors;
 
 /**
  *
@@ -24,11 +25,13 @@ import java.util.Arrays;
 public class Individual {
 
   public final double[] chromosome;
+  public final double[] sigmas;
   private double eval = -1;
 
-  public Individual(double[] chromosome) {
+  public Individual(double[] chromosome, double[] sigmas) {
 
     this.chromosome = chromosome;
+    this.sigmas = sigmas;
   }
 
   public double getEval() {
@@ -41,15 +44,15 @@ public class Individual {
     this.eval = eval;
   }
 
-  public static Individual generate(int n) {
+  @Override
+  public String toString() {
 
-    var chromosome = new double[n];
-    Arrays.fill(chromosome, 1);
-    return new Individual(chromosome);
-  }
-
-  public String render() {
-
-    return Arrays.toString(chromosome);
+    return String.format("(X: %s; Sigma: %s)",
+            Arrays.stream(chromosome)
+                    .mapToObj(v -> String.format("% .3f", v))
+                    .collect(Collectors.joining(", ")),
+            Arrays.stream(sigmas)
+                    .mapToObj(v -> String.format("% .7f", v))
+                    .collect(Collectors.joining(", ")));
   }
 }
