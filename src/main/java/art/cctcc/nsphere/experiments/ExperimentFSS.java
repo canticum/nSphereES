@@ -35,8 +35,8 @@ public class ExperimentFSS extends NDimSphere {
   @Override
   public String getTitle() {
 
-    return String.format("%s: %s%s, sigma=%.2f",
-            super.getTitle(), ESType.FSS.description, getESMode(), sigma);
+    return String.format("%s: %s, %s, sigma=%.2f",
+            super.getTitle(), getESMode(), ESType.FSS.description, sigma);
   }
 
   @Override

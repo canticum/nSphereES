@@ -20,7 +20,7 @@ package art.cctcc.nsphere.enums;
  * @author Jonathan Chang, Chun-yien <ccy@musicapoetica.org>
  */
 public enum RNG {
-  
+
   Xoshiro256PlusPlus, MersenneTwister, MT
 
 }

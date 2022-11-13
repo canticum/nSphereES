@@ -32,6 +32,6 @@ public enum ESMode {
 
   public String getMode(int mu, int lambda) {
 
-    return String.format("(%d%s%d)", mu, this.symbol, lambda);
+    return String.format("(%d%s%d)-ES", mu, this.symbol, lambda);
   }
 }

@@ -47,21 +47,21 @@ public class ESMain {
 
     final var n = 10;
     final var run = 10;
-    var sigmas = List.of(0.01, 0.1, 1.0);
-    var mode = ESMode.Plus;
-    var mu = 1;
-    var lambda = 1;
+    final var init_sigmas = List.of(0.01, 0.1, 1.0);
+    final var mode = ESMode.Plus;
+    final var mu = 1;
+    final var lambda = 1;
 
     //UNSS
-    var tau = 1e-7 / Math.sqrt(2 * Math.sqrt(n));
-    var tau_prime = 1 / Math.sqrt(2 * n);
-    var epsilon0 = 1e-4;
+    final var tau = 1e-7 / Math.sqrt(2 * Math.sqrt(n));
+    final var tau_prime = 1 / Math.sqrt(2 * n);
+    final var epsilon0 = 1e-4;
 
     //OneFive
-    var g = 5;
-    var a = 0.817;
+    final var g = 100;
+    final var a = 0.817;
 
-    var exp = ESType.UNSS;
+    final var exp = ESType.UNSS;
     final var description = exp.description;
 
     Function<Double, AbsExperiment> getExperiment = sigma -> switch (exp) {
@@ -75,31 +75,34 @@ public class ESMain {
 
     System.out.printf("""
             %s
-            %s, %s%s
+            %s: %s, %s
             RNG=%s, Seed=%d
             """, "*".repeat(80),
-            n + "-dimensional Sphere Model", description, mode.getMode(mu, lambda),
+            n + "-dimensional Sphere Model",
+            mode.getMode(mu, lambda), description,
             Rng, seed);
 
-    var folder = String.format("log-n%d-%s-%s_%d", n, description, mode.getMode(mu, lambda), seed);
+    var folder = String.format("n%d-%s-%s_%d", n, description, mode.getMode(mu, lambda), seed);
     var path = Path.of(System.getProperty("user.dir"), "es_data", folder);
     Files.createDirectories(path);
 
     var start = Instant.now();
 
-    var iterations = IntStream.rangeClosed(1, run)
-            .peek(i -> System.out.println("*".repeat(80) + "\nRun#" + i))
+    var iterations = IntStream.range(0, run)
+            .peek(i -> System.out.printf("""
+                                         %s
+                                         Run#%2d
+                                         """, "*".repeat(80), i + 1))
             .mapToObj(i
-                    -> sigmas.stream()
+                    -> init_sigmas.stream()
                     .map(getExperiment)
                     .peek(e -> System.out.printf(
                     """
-                              
-                    %s
+                    \n%s
                     %s
                     Iterations = %s, eval sizes = %s
                     """, e.getTitle(),
-                    e.run(path.resolve(String.format("run_%d(sigma=%.2f).csv", i, e.sigma))),
+                    e.run(path.resolve(String.format("run_%d(sigma=%.2f).csv", i + 1, e.sigma))),
                     e.iterations, e.evals.size()))
                     .collect(Collectors.toMap(e -> e.sigma, e -> e.iterations))
             ).toList();
@@ -120,15 +123,17 @@ public class ESMain {
       }
     }
 
-    sigmas.forEach(sigma -> {
-      var title = String.format("%d-Dimensional Sphere Model: %s%s, sigma=%.2f",
-              n, description, mode.getMode(mu, lambda), sigma);
+    init_sigmas.forEach(sigma -> {
+      var title = String.format("%d-Dimensional Sphere Model: %s, %s, sigma=%.2f",
+              n, mode.getMode(mu, lambda), description, sigma);
       var plot = new Plot(title);
       System.out.println();
-      for (int i = 1; i <= run; i++) {
-        var limit = limits.get(sigma)[1] == UpperLimit ? 100 : limits.get(sigma)[1] * 2;
-        var data = readCSV(path.resolve(String.format("run_%d(sigma=%.2f).csv", i, sigma)), limit + 1);
-        plot.add(String.format("run#%d%s", i, data.xData().size() > limit ? "*" : ""),
+      for (int i = 0; i < run; i++) {
+        var iteration = iterations.get(i).get(sigma);
+        var limit = limits.get(sigma)[1] == UpperLimit ? 100 : limits.get(sigma)[1] * 3 / 2;
+        var data = readCSV(path.resolve(String.format("run_%d(sigma=%.2f).csv", i + 1, sigma)), limit + 1);
+        plot.add(String.format("Run#%2d%s", i + 1, data.xData().size() > limit
+                ? (iteration == UpperLimit ? "*" : " (" + iteration + ")") : ""),
                 data.xData(), data.yData());
       }
       plot.show(path.resolve(String.format("plot(sigma=%.2f).png", sigma)));

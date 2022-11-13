@@ -50,8 +50,8 @@ public class ExperimentOneFive extends NDimSphere {
   @Override
   public String getTitle() {
 
-    return String.format("%s: %s%s, initial sigma=%.2f",
-            super.getTitle(), ESType.OneFive.description, getESMode(), sigma);
+    return String.format("%s: %s, %s, initial sigma=%.2f",
+            super.getTitle(), getESMode(), ESType.OneFive.description, sigma);
   }
 
   @Override
