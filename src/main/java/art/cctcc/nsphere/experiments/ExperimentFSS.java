@@ -25,7 +25,7 @@ import java.util.Arrays;
  *
  * @author Jonathan Chang, Chun-yien <ccy@musicapoetica.org>
  */
-public class ExperimentFSS extends AbsExpNDimSphere {
+public class ExperimentFSS extends NDimSphere {
 
   public ExperimentFSS(int n, ESMode mode, int mu, int lambda, double stddev) {
 

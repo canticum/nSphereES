@@ -18,7 +18,7 @@ package art.cctcc.nsphere;
 import art.cctcc.nsphere.experiments.ExperimentFSS;
 import art.cctcc.nsphere.experiments.ExperimentOneFive;
 import art.cctcc.nsphere.experiments.ExperimentUNSS;
-import art.cctcc.nsphere.experiments.AbsExp;
+import art.cctcc.nsphere.experiments.AbsExperiment;
 import art.cctcc.nsphere.enums.ESType;
 import art.cctcc.nsphere.enums.RNG;
 import art.cctcc.nsphere.enums.ESMode;
@@ -60,9 +60,9 @@ public class ESMain {
     var a = 0.817;
 
     var exp = ESType.OneFive;
-    final var type = exp.description;
+    final var description = exp.description;
 
-    Function<Double, AbsExp> getExperiment = sigma -> switch (exp) {
+    Function<Double, AbsExperiment> getExperiment = sigma -> switch (exp) {
       case FSS ->
         new ExperimentFSS(n, mode, mu, lambda, sigma);
       case UNSS ->
@@ -71,16 +71,15 @@ public class ESMain {
         new ExperimentOneFive(n, mode, mu, lambda, sigma, g, a);
     };
 
-    System.out.printf(
-            """
+    System.out.printf("""
             %s
             %s, %s%s
             RNG=%s, Seed=%d
             """, "*".repeat(80),
-            n + "-dimensional Sphere Model", type, mode.getMode(mu, lambda),
-            rng, seed);
+            n + "-dimensional Sphere Model", description, mode.getMode(mu, lambda),
+            Rng, seed);
 
-    var folder = String.format("log-n%d-%s-%s_%d", n, type, mode.getMode(mu, lambda), seed);
+    var folder = String.format("log-n%d-%s-%s_%d", n, description, mode.getMode(mu, lambda), seed);
     var path = Path.of(System.getProperty("user.dir"), "es_data", folder);
     Files.createDirectories(path);
 
@@ -121,7 +120,7 @@ public class ESMain {
 
     sigmas.forEach(sigma -> {
       var title = String.format("%d-Dimensional Sphere Model: %s%s, sigma=%.2f",
-              n, type, mode.getMode(mu, lambda), sigma);
+              n, description, mode.getMode(mu, lambda), sigma);
       var plot = new Plot(title);
       System.out.println();
       for (int i = 1; i <= run; i++) {

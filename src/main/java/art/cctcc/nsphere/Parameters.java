@@ -40,14 +40,15 @@ public class Parameters {
 
   public static RandomGenerator XOR;
   public static MersenneTwister MT;
-  public static RNG rng = RNG.MT;
+  public static RNG Rng = RNG.MT;
   public static int UpperLimit = 10000000;
 
   public static void initRandom(long seed, RNG rng) {
 
     if (rng != null)
-      Parameters.rng = rng;
-    switch (Parameters.rng) {
+      Parameters.Rng = rng;
+    switch (Parameters.Rng) {
+
       case Xoshiro256PlusPlus ->
         XOR = RandomGeneratorFactory.of("Xoshiro256PlusPlus").create(seed);
       case MersenneTwister,MT ->
@@ -57,7 +58,7 @@ public class Parameters {
 
   public static double rngGaussian(double stddev) {
 
-    return switch (rng) {
+    return switch (Rng) {
       case Xoshiro256PlusPlus ->
         XOR.nextGaussian(0, stddev);
       case MersenneTwister,MT ->
@@ -67,7 +68,7 @@ public class Parameters {
 
   public static double rngDouble() {
 
-    return switch (rng) {
+    return switch (Rng) {
       case Xoshiro256PlusPlus ->
         XOR.nextDouble();
       case MersenneTwister,MT ->
@@ -77,7 +78,7 @@ public class Parameters {
 
   public static boolean rngBoolean() {
 
-    return switch (rng) {
+    return switch (Rng) {
       case Xoshiro256PlusPlus ->
         XOR.nextBoolean();
       case MersenneTwister,MT ->
@@ -87,7 +88,7 @@ public class Parameters {
 
   public static int rngInt(int bound) {
 
-    return switch (rng) {
+    return switch (Rng) {
       case Xoshiro256PlusPlus ->
         XOR.nextInt(bound);
       case MersenneTwister,MT ->

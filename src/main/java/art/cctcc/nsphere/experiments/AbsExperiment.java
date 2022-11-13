@@ -36,7 +36,7 @@ import java.util.stream.Stream;
  *
  * @author Jonathan Chang, Chun-yien <ccy@musicapoetica.org>
  */
-public abstract class AbsExp {
+public abstract class AbsExperiment {
 
   public List<Double> evals
           = Collections.synchronizedList(new ArrayList<>());
@@ -51,7 +51,7 @@ public abstract class AbsExp {
 
   protected List<Individual> parents;
 
-  public AbsExp(int n, ESMode mode, int mu, int lambda, double sigma) {
+  public AbsExperiment(int n, ESMode mode, int mu, int lambda, double sigma) {
 
     this.n = n;
     this.mode = mode;
@@ -116,7 +116,7 @@ public abstract class AbsExp {
     try {
       Files.write(csv, output);
     } catch (IOException ex) {
-      Logger.getLogger(ExperimentFSS.class.getName()).log(Level.SEVERE, null, ex);
+      Logger.getLogger(AbsExperiment.class.getName()).log(Level.SEVERE, null, ex);
     }
 
     return time_elapsed(start);

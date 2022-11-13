@@ -26,7 +26,7 @@ import java.util.Arrays;
  *
  * @author Jonathan Chang, Chun-yien <ccy@musicapoetica.org>
  */
-public class ExperimentOneFive extends AbsExpNDimSphere {
+public class ExperimentOneFive extends NDimSphere {
 
   private double[] sigma_prime;
   private int g;

@@ -26,7 +26,7 @@ import java.util.stream.IntStream;
  *
  * @author Jonathan Chang, Chun-yien <ccy@musicapoetica.org>
  */
-public class ExperimentUNSS extends AbsExpNDimSphere {
+public class ExperimentUNSS extends NDimSphere {
 
   private double[][] sigmas;
   private final double tau;

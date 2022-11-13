@@ -23,9 +23,9 @@ import java.util.Arrays;
  *
  * @author Jonathan Chang, Chun-yien <ccy@musicapoetica.org>
  */
-public abstract class AbsExpNDimSphere extends AbsExp {
+public abstract class NDimSphere extends AbsExperiment {
 
-  public AbsExpNDimSphere(int n, ESMode mode, int mu, int lambda, double sigma) {
+  public NDimSphere(int n, ESMode mode, int mu, int lambda, double sigma) {
 
     super(n, mode, mu, lambda, sigma);
   }
@@ -48,7 +48,7 @@ public abstract class AbsExpNDimSphere extends AbsExp {
     
     return parents.stream()
               .map(Individual::getEval)
-              .filter(eval -> eval > -1)
+              .filter(eval -> eval != -1)
               .anyMatch(eval -> eval <= 0.0005);
   }
 }
