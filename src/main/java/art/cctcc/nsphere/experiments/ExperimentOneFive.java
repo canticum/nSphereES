@@ -34,9 +34,9 @@ public class ExperimentOneFive extends NDimSphere {
   private int mutation_count;
 
   public ExperimentOneFive(int n, ESMode mode,
-          int mu, int lambda, double sigma, int g, double a) {
+          int mu, int lambda, double init_sigma, int g, double a) {
 
-    super(n, mode, mu, lambda, 1, sigma);
+    super(n, mode, mu, lambda, init_sigma);
     this.g = g;
     this.a = a;
   }
@@ -51,7 +51,7 @@ public class ExperimentOneFive extends NDimSphere {
   public String getTitle() {
 
     return String.format("%s: %s, %s, initial sigma=%.2f",
-            super.getTitle(), getESMode(), ESType.OneFive.description, sigma);
+            super.getTitle(), getESMode(), ESType.OneFive.description, init_sigma);
   }
 
   @Override
@@ -61,8 +61,8 @@ public class ExperimentOneFive extends NDimSphere {
     var parent = parents.get(rngInt(mu));
     var chromosome = new double[n];
     Arrays.setAll(chromosome, i -> parent.chromosome[i]
-            + rngGaussian(parent.sigmas[n_sigma > 1 ? i : 0]));
-    var sigmas = Arrays.copyOf(parent.sigmas, n_sigma);
+            + rngGaussian(parent.sigmas[0]));
+    var sigmas = Arrays.copyOf(parent.sigmas, 1);
     var offspring = new Individual(chromosome, sigmas);
     if (this.getEval(offspring) < this.getEval(parent))
       this.g_s++;

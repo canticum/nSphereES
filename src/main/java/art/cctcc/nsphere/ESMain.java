@@ -48,6 +48,8 @@ public class ESMain {
     final var n = 10;
     final var run = 10;
     final var init_sigmas = List.of(0.01, 0.1, 1.0);
+
+    final var exp = ESType.UNSS;
     final var mode = ESMode.Plus;
     final var mu = 1;
     final var lambda = 1;
@@ -60,9 +62,6 @@ public class ESMain {
     //OneFive
     final var g = 100;
     final var a = 0.817;
-
-    final var exp = ESType.UNSS;
-    final var description = exp.description;
 
     Function<Double, AbsExperiment> getExperiment = sigma -> switch (exp) {
       case FSS ->
@@ -79,10 +78,10 @@ public class ESMain {
             RNG=%s, Seed=%d
             """, "*".repeat(80),
             n + "-dimensional Sphere Model",
-            mode.getMode(mu, lambda), description,
+            mode.getMode(mu, lambda), exp.description,
             Rng, seed);
 
-    var folder = String.format("n%d-%s-%s_%d", n, description, mode.getMode(mu, lambda), seed);
+    var folder = String.format("n%d-%s-%s_%d", n, exp.description, mode.getMode(mu, lambda), seed);
     var path = Path.of(System.getProperty("user.dir"), "es_data", folder);
     Files.createDirectories(path);
 
@@ -102,9 +101,9 @@ public class ESMain {
                     %s
                     Iterations = %s, eval sizes = %s
                     """, e.getTitle(),
-                    e.run(path.resolve(String.format("run_%d(sigma=%.2f).csv", i + 1, e.sigma))),
+                    e.run(path.resolve(String.format("run_%d(sigma=%.2f).csv", i + 1, e.init_sigma))),
                     e.iterations, e.evals.size()))
-                    .collect(Collectors.toMap(e -> e.sigma, e -> e.iterations))
+                    .collect(Collectors.toMap(e -> e.init_sigma, e -> e.iterations))
             ).toList();
     System.out.println("*".repeat(80));
     System.out.println(time_elapsed(start));
@@ -125,7 +124,7 @@ public class ESMain {
 
     init_sigmas.forEach(sigma -> {
       var title = String.format("%d-Dimensional Sphere Model: %s, %s, sigma=%.2f",
-              n, mode.getMode(mu, lambda), description, sigma);
+              n, mode.getMode(mu, lambda), exp.description, sigma);
       var plot = new Plot(title);
       System.out.println();
       for (int i = 0; i < run; i++) {

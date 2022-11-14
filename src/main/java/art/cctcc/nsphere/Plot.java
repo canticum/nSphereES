@@ -61,7 +61,7 @@ public class Plot {
     try {
       Files.write(path, BitmapEncoder.getBitmapBytes(chart, BitmapEncoder.BitmapFormat.PNG));
     } catch (IOException ex) {
-      Logger.getLogger(ESMain.class.getName()).log(Level.SEVERE, null, ex);
+      Logger.getLogger(Plot.class.getName()).log(Level.SEVERE, null, ex);
     }
     if (!GraphicsEnvironment.isHeadless()) {
       new SwingWrapper(chart).setTitle(title).displayChart();

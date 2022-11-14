@@ -26,6 +26,8 @@ import java.time.Instant;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
+import java.util.Objects;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.random.RandomGeneratorFactory;
@@ -117,19 +119,15 @@ public class Parameters {
     var yData = new ArrayList<Double>();
     try ( var reader = new FileReader(path.toFile());
              var rha = new CSVReaderHeaderAwareBuilder(reader).build()) {
-      do {
-        var row = rha.readMap();
-        if (row == null)
-          break;
-        var iteration = Integer.valueOf(row.get("Iteration"));
-        var average = Double.valueOf(row.get("Average"));
-        if (iteration > limit)
-          break;
+      Map<String, String> row;
+      int iteration;
+      while (Objects.nonNull(row = rha.readMap())
+              && (iteration = Integer.parseInt(row.get("Iteration"))) <= limit) {
         xData.add(iteration);
-        yData.add(average);
-      } while (true);
+        yData.add(Double.valueOf(row.get("Average")));
+      }
     } catch (IOException | CsvValidationException ex) {
-      Logger.getLogger(ESMain.class.getName()).log(Level.SEVERE, null, ex);
+      Logger.getLogger(Parameters.class.getName()).log(Level.SEVERE, null, ex);
     }
     return new Data(xData, yData);
   }

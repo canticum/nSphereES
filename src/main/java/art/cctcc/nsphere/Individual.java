@@ -28,7 +28,7 @@ public class Individual {
   public final double[] sigmas;
   private double eval = -1;
 
-  public Individual(double[] chromosome, double[] sigmas) {
+  public Individual(double[] chromosome, double... sigmas) {
 
     this.chromosome = chromosome;
     this.sigmas = sigmas;

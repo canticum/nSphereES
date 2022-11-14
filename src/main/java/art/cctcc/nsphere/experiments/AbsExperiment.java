@@ -38,7 +38,7 @@ import java.util.stream.Stream;
  * @author Jonathan Chang, Chun-yien <ccy@musicapoetica.org>
  * @param <I> Generic of Individual
  */
-public abstract class AbsExperiment<I extends Individual> {
+abstract public class AbsExperiment<I extends Individual> {
 
   public List<Double> evals
           = Collections.synchronizedList(new ArrayList<>());
@@ -48,33 +48,30 @@ public abstract class AbsExperiment<I extends Individual> {
   public final int mu;
   public final int lambda;
 
-  public int n_sigma;
-  public double sigma;
+  public final double init_sigma;
 
   protected List<I> parents;
 
   public int iterations;
 
-  public AbsExperiment(int n, ESMode mode, int mu, int lambda,
-          int n_sigma, double sigma) {
+  public AbsExperiment(int n, ESMode mode, int mu, int lambda, double init_sigma) {
 
     this.n = n;
     this.mode = mode;
     this.mu = mu;
     this.lambda = lambda;
-    this.n_sigma = n_sigma;
-    this.sigma = sigma;
+    this.init_sigma = init_sigma;
   }
 
-  public abstract String getTitle();
+  abstract public String getTitle();
 
-  protected abstract double calcEval(I idv);
+  abstract protected double calcEval(I idv);
 
-  protected abstract I mutation(int i);
+  abstract protected I mutation(int i);
 
-  protected abstract boolean goal();
+  abstract protected boolean goal();
 
-  protected abstract List<I> generate();
+  abstract protected List<I> generate();
 
   public String run(Path csv) {
 
@@ -88,7 +85,7 @@ public abstract class AbsExperiment<I extends Individual> {
             + IntStream.range(0, lambda)
                     .mapToObj(i -> "Y" + i)
                     .collect(Collectors.joining(",")));
-    
+
     // ES loop
     this.parents = generate();
     var finished = false;
@@ -98,7 +95,7 @@ public abstract class AbsExperiment<I extends Individual> {
               .mapToObj(this::mutation)
               .toList();
 
-      var avg = parents.stream()          
+      var avg = parents.stream()
               .mapToDouble(this::getEval)
               .average().getAsDouble();
 

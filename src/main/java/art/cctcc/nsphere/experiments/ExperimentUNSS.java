@@ -20,6 +20,8 @@ import art.cctcc.nsphere.enums.ESMode;
 import static art.cctcc.nsphere.Parameters.*;
 import art.cctcc.nsphere.enums.ESType;
 import java.util.Arrays;
+import java.util.List;
+import java.util.stream.Stream;
 
 /**
  *
@@ -31,10 +33,10 @@ public class ExperimentUNSS extends NDimSphere {
   private final double tauPrime;
   private final double epsilon0;
 
-  public ExperimentUNSS(int n, ESMode mode, int mu, int lambda, double sigma,
+  public ExperimentUNSS(int n, ESMode mode, int mu, int lambda, double init_sigma,
           double tau, double tauPrime, double epsilon0) {
 
-    super(n, mode, mu, lambda, n, sigma);
+    super(n, mode, mu, lambda, init_sigma);
     this.tau = tau;
     this.tauPrime = tauPrime;
     this.epsilon0 = epsilon0;
@@ -53,7 +55,7 @@ public class ExperimentUNSS extends NDimSphere {
   public String getTitle() {
 
     return String.format("%s: %s, %s, initial sigma=%.2f",
-            super.getTitle(), getESMode(), ESType.UNSS.description, sigma);
+            super.getTitle(), getESMode(), ESType.UNSS.description, init_sigma);
   }
 
   @Override
@@ -63,7 +65,7 @@ public class ExperimentUNSS extends NDimSphere {
     var gaussian_prime = rngGaussian(1);
 
     var chromosome = new double[n];
-    var sigmas = new double[n_sigma];
+    var sigmas = new double[n];
 
     Arrays.setAll(sigmas, i
             -> Math.max(parent.sigmas[i] * Math.pow(Math.E,
@@ -72,5 +74,18 @@ public class ExperimentUNSS extends NDimSphere {
     Arrays.setAll(chromosome, i
             -> parent.chromosome[i] + sigmas[i] * rngGaussian(1));
     return new Individual(chromosome, sigmas);
+  }
+
+  @Override
+  protected List<Individual> generate() {
+
+    return Stream.generate(() -> {
+      var chromosome = new double[n];
+      Arrays.fill(chromosome, 1.0);
+      var sigmas = new double[n];
+      Arrays.fill(sigmas, init_sigma);
+      return new Individual(chromosome, sigmas);
+    })
+            .limit(mu).toList();
   }
 }

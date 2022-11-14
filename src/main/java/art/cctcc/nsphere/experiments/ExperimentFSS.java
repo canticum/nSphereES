@@ -29,14 +29,14 @@ public class ExperimentFSS extends NDimSphere {
 
   public ExperimentFSS(int n, ESMode mode, int mu, int lambda, double sigma) {
 
-    super(n, mode, mu, lambda, 1, sigma);
+    super(n, mode, mu, lambda, sigma);
   }
 
   @Override
   public String getTitle() {
 
     return String.format("%s: %s, %s, sigma=%.2f",
-            super.getTitle(), getESMode(), ESType.FSS.description, sigma);
+            super.getTitle(), getESMode(), ESType.FSS.description, init_sigma);
   }
 
   @Override
@@ -45,7 +45,7 @@ public class ExperimentFSS extends NDimSphere {
     var parent = parents.get(rngInt(mu));
     var chromosome = new double[n];
     Arrays.setAll(chromosome, i -> parent.chromosome[i]
-            + rngGaussian(parent.sigmas[n_sigma > 1 ? i : 0]));
+            + rngGaussian(parent.sigmas[0]));
     return new Individual(chromosome, parent.sigmas);
   }
 }

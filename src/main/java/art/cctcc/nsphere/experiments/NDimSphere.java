@@ -28,10 +28,9 @@ import java.util.stream.Stream;
 public abstract class NDimSphere
         extends AbsExperiment<Individual> {
 
-  public NDimSphere(int n, ESMode mode, int mu, int lambda,
-          int n_sigma, double sigma) {
+  public NDimSphere(int n, ESMode mode, int mu, int lambda, double sigma) {
 
-    super(n, mode, mu, lambda, n_sigma, sigma);
+    super(n, mode, mu, lambda, sigma);
   }
 
   @Override
@@ -61,8 +60,8 @@ public abstract class NDimSphere
     return Stream.generate(() -> {
       var chromosome = new double[n];
       Arrays.fill(chromosome, 1.0);
-      var sigmas = new double[n_sigma];
-      Arrays.fill(sigmas, sigma);
+      var sigmas = new double[1];
+      Arrays.fill(sigmas, init_sigma);
       return new Individual(chromosome, sigmas);
     })
             .limit(mu).toList();
