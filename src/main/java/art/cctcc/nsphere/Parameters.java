@@ -15,24 +15,12 @@ package art.cctcc.nsphere;
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+import static art.cctcc.nsphere.Tools.getEpochMilli;
+import art.cctcc.nsphere.enums.ESMode;
+import art.cctcc.nsphere.enums.ESType;
 import art.cctcc.nsphere.enums.RNG;
-import com.opencsv.CSVReaderHeaderAwareBuilder;
-import com.opencsv.exceptions.CsvValidationException;
-import java.io.FileReader;
-import java.io.IOException;
-import java.nio.file.Path;
-import java.time.Duration;
-import java.time.Instant;
-import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
-import java.util.Objects;
-import java.util.logging.Level;
-import java.util.logging.Logger;
-import java.util.random.RandomGeneratorFactory;
-import java.util.random.RandomGenerator;
-import org.apache.commons.math3.random.MersenneTwister;
 
 /**
  *
@@ -40,99 +28,67 @@ import org.apache.commons.math3.random.MersenneTwister;
  */
 public class Parameters {
 
-  public static RandomGenerator XOR;
-  public static MersenneTwister MT;
-  public static RNG Rng = RNG.MT;
+  public static long Seed = getEpochMilli();
+  public static RNG RandomNumberGenerator = RNG.MT;
   public static int UpperLimit = 10000000;
 
-  public static void initRandom(long seed, RNG rng) {
+  public static int n = 10;
+  public static int run = 10;
 
-    if (rng != null)
-      Parameters.Rng = rng;
-    switch (Parameters.Rng) {
+  public static ESType type = ESType.UNSS;
+  public static ESMode mode = ESMode.Plus;
+  public static int mu = 1;
+  public static int lambda = 1;
 
-      case Xoshiro256PlusPlus ->
-        XOR = RandomGeneratorFactory.of("Xoshiro256PlusPlus").create(seed);
-      case MersenneTwister,MT ->
-        MT = new MersenneTwister(seed);
-    }
-  }
+  //UNSS
+  public static double tau = 1e-7 / Math.sqrt(2 * Math.sqrt(n));
+  public static double tau_prime = 1 / Math.sqrt(2 * n);
+  public static double epsilon0 = 1e-4;
 
-  public static double rngGaussian(double stddev) {
+  //OneFive
+  public static int g = 100;
+  public static double a = 0.817;
 
-    return switch (Rng) {
-      case Xoshiro256PlusPlus ->
-        XOR.nextGaussian(0, stddev);
-      case MersenneTwister,MT ->
-        stddev * MT.nextGaussian();
-    };
-  }
+  public static List<Double> init_sigmas = new ArrayList<>();
 
-  public static double rngDouble() {
+  public Parameters(String... args) {
 
-    return switch (Rng) {
-      case Xoshiro256PlusPlus ->
-        XOR.nextDouble();
-      case MersenneTwister,MT ->
-        MT.nextDouble();
-    };
-  }
+    for (int i = 0; i < args.length; i++) {
+      var arg = args[i].split("=");
+      switch (arg[0].toLowerCase()) {
+        case "seed" -> Seed = Long.parseLong(arg[1]);
+        case "rng" -> RandomNumberGenerator = RNG.valueOf(arg[1]);
+        case "limit" -> UpperLimit = Integer.parseInt(arg[1]);
 
-  public static boolean rngBoolean() {
+        case "n" -> n = Integer.parseInt(arg[1]);
+        case "run" -> run = Integer.parseInt(arg[1]);
 
-    return switch (Rng) {
-      case Xoshiro256PlusPlus ->
-        XOR.nextBoolean();
-      case MersenneTwister,MT ->
-        MT.nextBoolean();
-    };
-  }
-
-  public static int rngInt(int bound) {
-
-    return switch (Rng) {
-      case Xoshiro256PlusPlus ->
-        XOR.nextInt(bound);
-      case MersenneTwister,MT ->
-        MT.nextInt(bound);
-    };
-  }
-
-  public static long getEpochMilli() {
-
-    return ZonedDateTime.now().toInstant().toEpochMilli();
-  }
-
-  public static String time_elapsed(Instant start) {
-
-    var time_elapsed = Duration.between(start, Instant.now());
-    var hours = time_elapsed.toHoursPart();
-    return String.format("Time elapsed = %s%02dm %02ds",
-            (hours > 0) ? time_elapsed.toHoursPart() + "h " : "",
-            time_elapsed.toMinutesPart(), time_elapsed.toSecondsPart());
-  }
-
-  static Data readCSV(Path path, int limit) {
-
-    System.out.println("Reading " + path);
-    var xData = new ArrayList<Integer>();
-    var yData = new ArrayList<Double>();
-    try ( var reader = new FileReader(path.toFile());
-             var rha = new CSVReaderHeaderAwareBuilder(reader).build()) {
-      Map<String, String> row;
-      int iteration;
-      while (Objects.nonNull(row = rha.readMap())
-              && (iteration = Integer.parseInt(row.get("Iteration"))) <= limit) {
-        xData.add(iteration);
-        yData.add(Double.valueOf(row.get("Average")));
+        case "type" -> type = ESType.valueOf(arg[1]);
+        case "mode" -> mode = ESMode.valueOf(arg[1]);
+        case "mu" -> mu = Integer.parseInt(arg[1]);
+        case "lambda" -> lambda = Integer.parseInt(arg[1]);
+        
+        case "tau" -> tau = Double.parseDouble(arg[1]);
+        case "taup" -> tau_prime = Double.parseDouble(arg[1]);
+        case "ep0" -> epsilon0 = Double.parseDouble(arg[1]);
+        
+        case "g" -> g = Integer.parseInt(arg[1]);
+        case "a" -> a = Double.parseDouble(arg[1]);
+        default -> init_sigmas.add(Double.valueOf(arg[0]));
       }
-    } catch (IOException | CsvValidationException ex) {
-      Logger.getLogger(Parameters.class.getName()).log(Level.SEVERE, null, ex);
     }
-    return new Data(xData, yData);
+    if (init_sigmas.isEmpty())
+      init_sigmas = List.of(0.01, 0.1, 1.0);
   }
 
-  record Data(List<Integer> xData, List<Double> yData) {
+  public String toString() {
 
+    return String.format("""
+            %d-dimensional Sphere Model: %s, %s
+            init sigmas = %s
+            RNG=%s, Seed=%d""",
+            n, mode.getMode(mu, lambda), type.description,
+            init_sigmas,
+            RandomNumberGenerator, Seed);
   }
 }

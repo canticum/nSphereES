@@ -17,7 +17,8 @@ package art.cctcc.nsphere.experiments;
 
 import art.cctcc.nsphere.Individual;
 import art.cctcc.nsphere.enums.ESMode;
-import static art.cctcc.nsphere.Parameters.*;
+import static art.cctcc.nsphere.Tools.rngGaussian;
+import static art.cctcc.nsphere.Tools.rngInt;
 import art.cctcc.nsphere.enums.ESType;
 import java.util.Arrays;
 

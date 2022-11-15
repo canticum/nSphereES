@@ -21,6 +21,6 @@ package art.cctcc.nsphere.enums;
  */
 public enum RNG {
 
-  Xoshiro256PlusPlus, MersenneTwister, MT
+  Xoshiro256PlusPlus, XOR, MersenneTwister, MT
 
 }

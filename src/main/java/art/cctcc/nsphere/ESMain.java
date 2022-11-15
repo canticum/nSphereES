@@ -19,15 +19,14 @@ import art.cctcc.nsphere.experiments.ExperimentFSS;
 import art.cctcc.nsphere.experiments.ExperimentOneFive;
 import art.cctcc.nsphere.experiments.ExperimentUNSS;
 import art.cctcc.nsphere.experiments.AbsExperiment;
-import art.cctcc.nsphere.enums.ESType;
 import art.cctcc.nsphere.enums.RNG;
-import art.cctcc.nsphere.enums.ESMode;
 import static art.cctcc.nsphere.Parameters.*;
+import static art.cctcc.nsphere.Tools.initRandom;
+import static art.cctcc.nsphere.Tools.time_elapsed;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.Instant;
-import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.function.Function;
@@ -42,28 +41,30 @@ public class ESMain {
 
   public static void main(String... args) throws IOException {
 
-    final var seed = getEpochMilli();
+    final var params = new Parameters(args);
+
+    final var seed = params.Seed;
     initRandom(seed, RNG.Xoshiro256PlusPlus);
 
-    final var n = 10;
-    final var run = 10;
-    final var init_sigmas = List.of(0.01, 0.1, 1.0);
+    final var n = params.n;
+    final var run = params.run;
+    final var init_sigmas = params.init_sigmas;
 
-    final var exp = ESType.UNSS;
-    final var mode = ESMode.Plus;
-    final var mu = 1;
-    final var lambda = 1;
+    final var type = params.type;
+    final var mode = params.mode;
+    final var mu = params.mu;
+    final var lambda = params.lambda;
 
     //UNSS
-    final var tau = 1e-7 / Math.sqrt(2 * Math.sqrt(n));
-    final var tau_prime = 1 / Math.sqrt(2 * n);
-    final var epsilon0 = 1e-4;
-
+    final var tau = params.tau;
+    final var tau_prime = params.tau_prime;
+    final var epsilon0 = params.epsilon0;
+    
     //OneFive
-    final var g = 100;
-    final var a = 0.817;
+    final var g = params.g;
+    final var a = params.a;
 
-    Function<Double, AbsExperiment> getExperiment = sigma -> switch (exp) {
+    Function<Double, AbsExperiment> getExperiment = sigma -> switch (type) {
       case FSS ->
         new ExperimentFSS(n, mode, mu, lambda, sigma);
       case UNSS ->
@@ -72,16 +73,10 @@ public class ESMain {
         new ExperimentOneFive(n, mode, mu, lambda, sigma, g, a);
     };
 
-    System.out.printf("""
-            %s
-            %s: %s, %s
-            RNG=%s, Seed=%d
-            """, "*".repeat(80),
-            n + "-dimensional Sphere Model",
-            mode.getMode(mu, lambda), exp.description,
-            Rng, seed);
+    System.out.println("*".repeat(80));
+    System.out.println(params);
 
-    var folder = String.format("n%d-%s-%s_%d", n, exp.description, mode.getMode(mu, lambda), seed);
+    var folder = String.format("n%d-%s-%s_%d", n, type.description, mode.getMode(mu, lambda), seed);
     var path = Path.of(System.getProperty("user.dir"), "es_data", folder);
     Files.createDirectories(path);
 
@@ -124,13 +119,13 @@ public class ESMain {
 
     init_sigmas.forEach(sigma -> {
       var title = String.format("%d-Dimensional Sphere Model: %s, %s, sigma=%.2f",
-              n, mode.getMode(mu, lambda), exp.description, sigma);
+              n, mode.getMode(mu, lambda), type.description, sigma);
       var plot = new Plot(title);
       System.out.println();
       for (int i = 0; i < run; i++) {
         var iteration = iterations.get(i).get(sigma);
         var limit = limits.get(sigma)[1] == UpperLimit ? 100 : limits.get(sigma)[1] * 3 / 2;
-        var data = readCSV(path.resolve(String.format("run_%d(sigma=%.2f).csv", i + 1, sigma)), limit + 1);
+        var data = Plot.readCSV(path.resolve(String.format("run_%d(sigma=%.2f).csv", i + 1, sigma)), limit + 1);
         plot.add(String.format("Run#%2d%s", i + 1, data.xData().size() > limit
                 ? (iteration == UpperLimit ? "*" : " (" + iteration + ")") : ""),
                 data.xData(), data.yData());

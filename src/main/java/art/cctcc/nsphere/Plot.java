@@ -15,11 +15,17 @@
  */
 package art.cctcc.nsphere;
 
+import com.opencsv.CSVReaderHeaderAwareBuilder;
+import com.opencsv.exceptions.CsvValidationException;
 import java.awt.GraphicsEnvironment;
+import java.io.FileReader;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
+import java.util.Objects;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import org.knowm.xchart.BitmapEncoder;
@@ -66,5 +72,29 @@ public class Plot {
     if (!GraphicsEnvironment.isHeadless()) {
       new SwingWrapper(chart).setTitle(title).displayChart();
     }
+  }
+
+  public static PlotData readCSV(Path path, int limit) {
+
+    System.out.println("Reading " + path);
+    var xData = new ArrayList<Integer>();
+    var yData = new ArrayList<Double>();
+    try ( var reader = new FileReader(path.toFile());
+             var rha = new CSVReaderHeaderAwareBuilder(reader).build()) {
+      Map<String, String> row;
+      int iteration;
+      while (Objects.nonNull(row = rha.readMap())
+              && (iteration = Integer.parseInt(row.get("Iteration"))) <= limit) {
+        xData.add(iteration);
+        yData.add(Double.valueOf(row.get("Average")));
+      }
+    } catch (IOException | CsvValidationException ex) {
+      Logger.getLogger(Parameters.class.getName()).log(Level.SEVERE, null, ex);
+    }
+    return new PlotData(xData, yData);
+  }
+
+  record PlotData(List<Integer> xData, List<Double> yData) {
+
   }
 }
