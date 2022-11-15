@@ -16,9 +16,8 @@
 package art.cctcc.nsphere.experiments;
 
 import art.cctcc.nsphere.Individual;
+import static art.cctcc.nsphere.RandomNumberGenerator.*;
 import art.cctcc.nsphere.enums.ESMode;
-import static art.cctcc.nsphere.Tools.rngGaussian;
-import static art.cctcc.nsphere.Tools.rngInt;
 import art.cctcc.nsphere.enums.ESType;
 import java.util.Arrays;
 
@@ -34,17 +33,17 @@ public class ExperimentOneFive extends NDimSphere {
   private int mutation_count;
 
   public ExperimentOneFive(int n, ESMode mode,
-          int mu, int lambda, double init_sigma, int g, double a) {
+          int mu, int lambda, double init_sigma, int g, double a, int upper_limit) {
 
-    super(n, mode, mu, lambda, init_sigma);
+    super(n, mode, mu, lambda, init_sigma, upper_limit);
     this.g = g;
     this.a = a;
   }
 
   public ExperimentOneFive(int n, ESMode mode,
-          int mu, int lambda, double sigma, int g) {
+          int mu, int lambda, double sigma, int g, int upper_limit) {
 
-    this(n, mode, mu, lambda, sigma, g, 0.817);
+    this(n, mode, mu, lambda, sigma, g, 0.817, upper_limit);
   }
 
   @Override

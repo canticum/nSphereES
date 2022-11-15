@@ -15,6 +15,7 @@ package art.cctcc.nsphere;
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+import static art.cctcc.nsphere.RandomNumberGenerator.initRandom;
 import static art.cctcc.nsphere.Tools.getEpochMilli;
 import art.cctcc.nsphere.enums.ESMode;
 import art.cctcc.nsphere.enums.ESType;
@@ -28,37 +29,37 @@ import java.util.List;
  */
 public class Parameters {
 
-  public static long Seed = getEpochMilli();
-  public static RNG RandomNumberGenerator = RNG.MT;
-  public static int UpperLimit = 10000000;
+  public long seed = getEpochMilli();
+  public RNG rng = RNG.Xoshiro256PlusPlus;
+  public int upper_limit = 10000000;
 
-  public static int n = 10;
-  public static int run = 10;
+  public int n = 10;
+  public int run = 10;
 
-  public static ESType type = ESType.UNSS;
-  public static ESMode mode = ESMode.Plus;
-  public static int mu = 1;
-  public static int lambda = 1;
+  public ESType type = ESType.UNSS;
+  public ESMode mode = ESMode.Plus;
+  public int mu = 1;
+  public int lambda = 1;
 
   //UNSS
-  public static double tau = 1e-7 / Math.sqrt(2 * Math.sqrt(n));
-  public static double tau_prime = 1 / Math.sqrt(2 * n);
-  public static double epsilon0 = 1e-4;
+  public double tau = 1e-7 / Math.sqrt(2 * Math.sqrt(n));
+  public double tau_prime = 1 / Math.sqrt(2 * n);
+  public double epsilon0 = 1e-4;
 
   //OneFive
-  public static int g = 100;
-  public static double a = 0.817;
+  public int g = 100;
+  public double a = 0.817;
 
-  public static List<Double> init_sigmas = new ArrayList<>();
+  public List<Double> init_sigmas = new ArrayList<>();
 
   public Parameters(String... args) {
 
     for (int i = 0; i < args.length; i++) {
       var arg = args[i].split("=");
       switch (arg[0].toLowerCase()) {
-        case "seed" -> Seed = Long.parseLong(arg[1]);
-        case "rng" -> RandomNumberGenerator = RNG.valueOf(arg[1]);
-        case "limit" -> UpperLimit = Integer.parseInt(arg[1]);
+        case "seed" -> seed = Long.parseLong(arg[1]);
+        case "rng" -> rng = RNG.valueOf(arg[1]);
+        case "limit" -> upper_limit = Integer.parseInt(arg[1]);
 
         case "n" -> n = Integer.parseInt(arg[1]);
         case "run" -> run = Integer.parseInt(arg[1]);
@@ -67,16 +68,19 @@ public class Parameters {
         case "mode" -> mode = ESMode.valueOf(arg[1]);
         case "mu" -> mu = Integer.parseInt(arg[1]);
         case "lambda" -> lambda = Integer.parseInt(arg[1]);
-        
+
         case "tau" -> tau = Double.parseDouble(arg[1]);
         case "taup" -> tau_prime = Double.parseDouble(arg[1]);
         case "ep0" -> epsilon0 = Double.parseDouble(arg[1]);
-        
+
         case "g" -> g = Integer.parseInt(arg[1]);
         case "a" -> a = Double.parseDouble(arg[1]);
         default -> init_sigmas.add(Double.valueOf(arg[0]));
       }
     }
+
+    initRandom(seed, rng);
+
     if (init_sigmas.isEmpty())
       init_sigmas = List.of(0.01, 0.1, 1.0);
   }
@@ -89,6 +93,6 @@ public class Parameters {
             RNG=%s, Seed=%d""",
             n, mode.getMode(mu, lambda), type.description,
             init_sigmas,
-            RandomNumberGenerator, Seed);
+            rng, seed);
   }
 }

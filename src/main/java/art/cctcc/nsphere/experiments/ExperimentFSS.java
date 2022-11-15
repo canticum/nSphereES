@@ -16,9 +16,8 @@
 package art.cctcc.nsphere.experiments;
 
 import art.cctcc.nsphere.Individual;
+import static art.cctcc.nsphere.RandomNumberGenerator.*;
 import art.cctcc.nsphere.enums.ESMode;
-import static art.cctcc.nsphere.Tools.rngGaussian;
-import static art.cctcc.nsphere.Tools.rngInt;
 import art.cctcc.nsphere.enums.ESType;
 import java.util.Arrays;
 
@@ -28,9 +27,9 @@ import java.util.Arrays;
  */
 public class ExperimentFSS extends NDimSphere {
 
-  public ExperimentFSS(int n, ESMode mode, int mu, int lambda, double sigma) {
+  public ExperimentFSS(int n, ESMode mode, int mu, int lambda, double sigma, int upper_limit) {
 
-    super(n, mode, mu, lambda, sigma);
+    super(n, mode, mu, lambda, sigma, upper_limit);
   }
 
   @Override

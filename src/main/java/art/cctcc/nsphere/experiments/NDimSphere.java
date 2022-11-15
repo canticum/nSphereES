@@ -28,9 +28,9 @@ import java.util.stream.Stream;
 public abstract class NDimSphere
         extends AbsExperiment<Individual> {
 
-  public NDimSphere(int n, ESMode mode, int mu, int lambda, double sigma) {
+  public NDimSphere(int n, ESMode mode, int mu, int lambda, double sigma, int upper_limit) {
 
-    super(n, mode, mu, lambda, sigma);
+    super(n, mode, mu, lambda, sigma, upper_limit);
   }
 
   @Override

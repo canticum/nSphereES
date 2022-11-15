@@ -19,9 +19,6 @@ import art.cctcc.nsphere.experiments.ExperimentFSS;
 import art.cctcc.nsphere.experiments.ExperimentOneFive;
 import art.cctcc.nsphere.experiments.ExperimentUNSS;
 import art.cctcc.nsphere.experiments.AbsExperiment;
-import art.cctcc.nsphere.enums.RNG;
-import static art.cctcc.nsphere.Parameters.*;
-import static art.cctcc.nsphere.Tools.initRandom;
 import static art.cctcc.nsphere.Tools.time_elapsed;
 import java.io.IOException;
 import java.nio.file.Files;
@@ -43,12 +40,12 @@ public class ESMain {
 
     final var params = new Parameters(args);
 
-    final var seed = params.Seed;
-    initRandom(seed, RNG.Xoshiro256PlusPlus);
+    final var seed = params.seed;
 
     final var n = params.n;
     final var run = params.run;
     final var init_sigmas = params.init_sigmas;
+    final var upper_limit = params.upper_limit;
 
     final var type = params.type;
     final var mode = params.mode;
@@ -59,18 +56,18 @@ public class ESMain {
     final var tau = params.tau;
     final var tau_prime = params.tau_prime;
     final var epsilon0 = params.epsilon0;
-    
+
     //OneFive
     final var g = params.g;
     final var a = params.a;
 
     Function<Double, AbsExperiment> getExperiment = sigma -> switch (type) {
       case FSS ->
-        new ExperimentFSS(n, mode, mu, lambda, sigma);
+        new ExperimentFSS(n, mode, mu, lambda, sigma, upper_limit);
       case UNSS ->
-        new ExperimentUNSS(n, mode, mu, lambda, sigma, tau, tau_prime, epsilon0);
+        new ExperimentUNSS(n, mode, mu, lambda, sigma, tau, tau_prime, epsilon0, upper_limit);
       default ->
-        new ExperimentOneFive(n, mode, mu, lambda, sigma, g, a);
+        new ExperimentOneFive(n, mode, mu, lambda, sigma, g, a, upper_limit);
     };
 
     System.out.println("*".repeat(80));
@@ -124,10 +121,10 @@ public class ESMain {
       System.out.println();
       for (int i = 0; i < run; i++) {
         var iteration = iterations.get(i).get(sigma);
-        var limit = limits.get(sigma)[1] == UpperLimit ? 100 : limits.get(sigma)[1] * 3 / 2;
+        var limit = limits.get(sigma)[1] == params.upper_limit ? 100 : limits.get(sigma)[1] * 3 / 2;
         var data = Plot.readCSV(path.resolve(String.format("run_%d(sigma=%.2f).csv", i + 1, sigma)), limit + 1);
         plot.add(String.format("Run#%2d%s", i + 1, data.xData().size() > limit
-                ? (iteration == UpperLimit ? "*" : " (" + iteration + ")") : ""),
+                ? (iteration == params.upper_limit ? "*" : " (" + iteration + ")") : ""),
                 data.xData(), data.yData());
       }
       plot.show(path.resolve(String.format("plot(sigma=%.2f).png", sigma)));

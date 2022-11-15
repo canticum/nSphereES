@@ -17,7 +17,6 @@ package art.cctcc.nsphere.experiments;
 
 import art.cctcc.nsphere.Individual;
 import art.cctcc.nsphere.enums.ESMode;
-import static art.cctcc.nsphere.Parameters.*;
 import static art.cctcc.nsphere.Tools.time_elapsed;
 import java.io.IOException;
 import java.nio.file.Files;
@@ -47,20 +46,21 @@ abstract public class AbsExperiment<I extends Individual> {
   public final ESMode mode;
   public final int mu;
   public final int lambda;
-
   public final double init_sigma;
+  public final int upper_limit;
 
   protected List<I> parents;
 
   public int iterations;
 
-  public AbsExperiment(int n, ESMode mode, int mu, int lambda, double init_sigma) {
+  public AbsExperiment(int n, ESMode mode, int mu, int lambda, double init_sigma, int upper_limit) {
 
     this.n = n;
     this.mode = mode;
     this.mu = mu;
     this.lambda = lambda;
     this.init_sigma = init_sigma;
+    this.upper_limit = upper_limit;
   }
 
   abstract public String getTitle();
@@ -89,7 +89,7 @@ abstract public class AbsExperiment<I extends Individual> {
     // ES loop
     this.parents = generate();
     var finished = false;
-    while (this.iterations < UpperLimit && !finished) {
+    while (this.iterations < this.upper_limit && !finished) {
 
       var offspring = IntStream.range(0, lambda)
               .mapToObj(this::mutation)
